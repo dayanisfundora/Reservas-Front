@@ -1,0 +1,1278 @@
+@import './tokens.scss';
+
+// ── Base ──
+body {
+    font-family: var(--app-font);
+    background: var(--app-page-bg);
+    background-attachment: fixed;
+    color: var(--app-ink);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+html {
+    font-size: clamp(13px, 0.82rem + 0.35vw, 15.5px);
+}
+
+img,
+svg,
+video {
+    max-width: 100%;
+    height: auto;
+}
+
+#mainLayout {
+    background: transparent !important;
+}
+
+// ── Enterprise cards ──
+.q-card {
+    position: relative;
+    border-radius: var(--app-radius) !important;
+    box-shadow: var(--app-shadow-md) !important;
+    border: 1px solid var(--app-border) !important;
+    background:
+        var(--app-card-shine),
+        var(--app-surface) !important;
+    overflow: hidden;
+    transition:
+        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.28s ease,
+        border-color 0.28s ease;
+}
+
+.q-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0f766e 0%, #14b8a6 55%, #d97706 100%);
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.q-card:hover {
+    box-shadow: var(--app-shadow-card-hover) !important;
+    border-color: rgba(15, 118, 110, 0.18) !important;
+}
+
+.q-card > .q-card__section {
+    position: relative;
+    z-index: 1;
+}
+
+.surface-card {
+    background:
+        var(--app-card-shine),
+        var(--app-surface) !important;
+    border: 1px solid var(--app-border) !important;
+    border-radius: var(--app-radius) !important;
+    box-shadow: var(--app-shadow-md) !important;
+}
+
+// Cards without top accent (nav tiles / dialogs that set their own look)
+.q-card.no-accent-bar::before,
+.modern-card::before,
+.login-card::before,
+.delete-card::before,
+.loading-card::before {
+    display: none;
+}
+
+.q-card.loading-card {
+    background: var(--app-surface) !important;
+    box-shadow: var(--app-shadow-lg) !important;
+}
+
+.q-card.loading-card:hover {
+    transform: none;
+    box-shadow: var(--app-shadow-lg) !important;
+    border-color: var(--app-border-strong) !important;
+}
+
+body.body--dark .q-card.loading-card {
+    background: #1e293b !important;
+    border-color: rgba(148, 163, 184, 0.28) !important;
+    color: #f1f5f9 !important;
+}
+
+// ── Buttons ──
+.q-btn {
+    border-radius: var(--app-radius-sm);
+    font-family: var(--app-font);
+    font-weight: 650;
+    letter-spacing: 0.015em;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.q-btn--unelevated.bg-primary,
+.q-btn--standard.bg-primary,
+.q-btn.bg-primary {
+    box-shadow: 0 6px 18px rgba(15, 118, 110, 0.3);
+}
+
+.q-btn--unelevated.bg-primary:hover,
+.q-btn--standard.bg-primary:hover,
+.q-btn.bg-primary:hover {
+    filter: brightness(1.05);
+    box-shadow: 0 8px 22px rgba(15, 118, 110, 0.38);
+    transform: translateY(-1px);
+}
+
+.btn-accent {
+    background: var(--app-accent) !important;
+    color: #fff !important;
+    box-shadow: 0 6px 18px rgba(217, 119, 6, 0.28) !important;
+}
+
+// ── Forms (enterprise fields) ──
+.q-field--outlined .q-field__control {
+    border-radius: var(--app-radius-sm);
+    background: rgba(248, 250, 249, 0.9);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+
+    &::before {
+        border-color: var(--app-border-strong) !important;
+        border-width: 1.5px;
+        border-radius: var(--app-radius-sm);
+        transition: border-color 0.2s ease;
+    }
+
+    &::after {
+        border-radius: var(--app-radius-sm);
+        border-width: 2px;
+    }
+}
+
+.q-field--outlined:hover .q-field__control {
+    background: #fff;
+}
+
+.q-field--outlined:hover .q-field__control::before {
+    border-color: rgba(15, 118, 110, 0.35) !important;
+}
+
+.q-field--outlined.q-field--focused .q-field__control {
+    background: #fff;
+    box-shadow: 0 0 0 4px var(--app-primary-soft);
+}
+
+.q-field--outlined.q-field--focused .q-field__control::after {
+    border-color: var(--app-primary);
+}
+
+// Chrome paints saved credentials yellow; keep the field's own background in both themes.
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--app-ink) !important;
+    caret-color: var(--app-ink);
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    transition: background-color 600000s 0s, color 600000s 0s;
+}
+
+.q-field__label {
+    font-weight: 550;
+    color: var(--app-ink-muted);
+}
+
+.q-select .q-field__native,
+.q-select .q-field__label,
+.q-select .q-field__control,
+.q-input .q-field__native,
+.q-input .q-field__label,
+.q-input .q-field__control {
+    font-size: 14.5px !important;
+    line-height: 1.25 !important;
+    font-family: var(--app-font);
+}
+
+.q-tab-panels .q-form,
+.q-card .q-form {
+    padding-top: 0.25rem;
+}
+
+// ── Banners (alerts / info strips) ──
+.q-banner {
+    border-radius: 14px !important;
+    border: 1px solid transparent;
+    box-shadow: var(--app-shadow-sm);
+    font-weight: 500;
+    overflow: hidden;
+    position: relative;
+}
+
+.q-banner::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: currentColor;
+    opacity: 0.55;
+}
+
+.q-banner.bg-warning,
+.q-banner.bg-orange-1,
+.q-banner.bg-amber {
+    background: linear-gradient(105deg, #fffbeb 0%, #fef3c7 100%) !important;
+    border-color: rgba(217, 119, 6, 0.28) !important;
+    color: #92400e !important;
+}
+
+.q-banner.bg-info,
+.q-banner.bg-blue-1,
+.q-banner.bg-teal-1 {
+    background: linear-gradient(105deg, #ecfdf5 0%, #ccfbf1 100%) !important;
+    border-color: rgba(15, 118, 110, 0.28) !important;
+    color: #115e59 !important;
+}
+
+.q-banner.bg-negative,
+.q-banner.bg-red-1 {
+    background: linear-gradient(105deg, #fef2f2 0%, #fee2e2 100%) !important;
+    border-color: rgba(198, 40, 40, 0.25) !important;
+    color: #991b1b !important;
+}
+
+.q-banner.bg-positive,
+.q-banner.bg-green-1 {
+    background: linear-gradient(105deg, #ecfdf3 0%, #d1fae5 100%) !important;
+    border-color: rgba(21, 153, 71, 0.28) !important;
+    color: #166534 !important;
+}
+
+// ── Tables (Quasar) ──
+.q-table {
+    border-radius: var(--app-radius) !important;
+    overflow: hidden;
+    border: 1px solid var(--app-border) !important;
+    box-shadow: var(--app-shadow-sm);
+    background: #fff;
+}
+
+.q-table__top {
+    padding: 14px 18px;
+    background: linear-gradient(180deg, #f7fbfa 0%, #ffffff 100%);
+    border-bottom: 1px solid var(--app-border);
+}
+
+.q-table__title {
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    color: var(--app-ink);
+}
+
+.q-table thead tr th {
+    font-family: var(--app-font) !important;
+    font-weight: 750 !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--app-ink-muted) !important;
+    background: linear-gradient(180deg, #eef5f3 0%, #e4eeeb 100%) !important;
+    border-bottom: 1px solid rgba(15, 118, 110, 0.12) !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+}
+
+.q-table tbody td {
+    border-bottom: 1px solid var(--app-border) !important;
+    font-size: 0.875rem;
+    color: var(--app-ink);
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.q-table tbody tr {
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.q-table tbody tr:hover td {
+    background: linear-gradient(90deg, rgba(15, 118, 110, 0.07), rgba(15, 118, 110, 0.03)) !important;
+}
+
+.q-table tbody tr:nth-child(even) td {
+    background: rgba(248, 250, 249, 0.65);
+}
+
+.q-table tbody tr:nth-child(even):hover td {
+    background: linear-gradient(90deg, rgba(15, 118, 110, 0.08), rgba(15, 118, 110, 0.035)) !important;
+}
+
+.q-table__bottom {
+    background: #f8faf9;
+    border-top: 1px solid var(--app-border);
+    padding: 10px 16px;
+}
+
+.centered-table .q-table__cell {
+    text-align: center;
+}
+
+.responsive-table {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--app-radius);
+}
+
+// Quasar tables: siempre scroll horizontal en viewports estrechos
+.q-table__middle,
+.q-markup-table {
+    overflow-x: auto !important;
+    max-width: 100%;
+}
+
+.q-table {
+    min-width: 0;
+}
+
+// Diálogos: no desbordan laptops
+.q-dialog__inner > div {
+    max-width: min(96vw, 960px);
+}
+
+.q-dialog__inner--minimized > div {
+    max-width: min(96vw, 560px);
+}
+
+// Hubs de menú (ingresos, gastos, impuestos…)
+.hub-page {
+    padding: 0.25rem 0.25rem 1.75rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+    gap: clamp(0.9rem, 1.5vw, 1.4rem);
+    justify-content: stretch;
+    max-width: 1100px;
+    margin-inline: auto;
+    animation: pageEnter 0.5s ease both;
+}
+
+.hub-card-slot {
+    width: 100%;
+    min-width: 0;
+}
+
+// Libro ingresos/gastos — área útil según alto de laptop
+.libro-page {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: clip;
+}
+
+.libro-page .row.items-center {
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+}
+
+.libro-panels {
+    min-height: min(420px, 52vh) !important;
+    max-height: calc(100vh - 240px) !important;
+    overflow: auto !important;
+}
+
+.libro-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+}
+
+.libro-table {
+    width: 100%;
+    min-width: 920px;
+}
+
+.libro-table.tributos-table {
+    min-width: 1100px;
+}
+
+// ── Fiscal / HTML tables ──
+.fiscal-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--app-border-strong);
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow-sm);
+    color: var(--app-ink);
+}
+
+.fiscal-table th,
+.fiscal-table td {
+    border-bottom: 1px solid var(--app-border);
+    border-right: 1px solid var(--app-border);
+    padding: 10px 12px;
+    font-size: 12.5px;
+    color: var(--app-ink);
+}
+
+.fiscal-table th:last-child,
+.fiscal-table td:last-child {
+    border-right: none;
+}
+
+.fiscal-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.fiscal-table thead th {
+    background: linear-gradient(180deg, #0f766e 0%, #0d9488 100%);
+    font-weight: 750;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #ecfdf5;
+}
+
+.fiscal-table tbody tr:nth-child(even) td {
+    background: color-mix(in srgb, var(--app-surface-muted) 70%, transparent);
+}
+
+.fiscal-table tbody tr:hover td {
+    background: var(--app-primary-soft);
+}
+
+// ── Contrib / retención tables (seguridad social, ingresos personales) ──
+.contrib-table-wrapper {
+    background: var(--app-surface) !important;
+    border: 1px solid var(--app-border-strong) !important;
+    color: var(--app-ink);
+}
+
+.contrib-table {
+    background: transparent !important;
+    color: var(--app-ink) !important;
+}
+
+.contrib-table .q-table__middle thead th {
+    background: var(--app-surface-elevated) !important;
+    color: var(--app-primary) !important;
+    border-bottom-color: var(--app-border-strong) !important;
+}
+
+.contrib-table .q-table__middle td,
+.contrib-table .q-td,
+.contrib-table .q-td__content {
+    color: var(--app-ink) !important;
+    border-bottom-color: var(--app-border) !important;
+}
+
+.contrib-table .q-table__middle tbody tr:nth-child(odd) {
+    background: color-mix(in srgb, var(--app-ink) 3%, transparent);
+}
+
+.contrib-table .q-table__middle tbody tr:nth-child(even) td {
+    background: color-mix(in srgb, var(--app-surface-muted) 55%, transparent) !important;
+}
+
+.contrib-table .q-table__middle tbody tr:hover td {
+    background: var(--app-primary-soft) !important;
+}
+
+.contrib-table .q-table__middle tbody tr:last-child,
+.contrib-table .q-table__middle tbody tr:last-child td {
+    background: color-mix(in srgb, var(--app-primary) 12%, var(--app-surface)) !important;
+    color: var(--app-ink) !important;
+}
+
+.salario-display {
+    background: var(--app-surface-elevated) !important;
+    border-color: var(--app-border-strong) !important;
+    color: var(--app-ink) !important;
+}
+
+.nota-table {
+    width: 100%;
+    max-width: 640px;
+    border-collapse: collapse;
+    color: var(--app-ink);
+}
+
+.nota-table th,
+.nota-table td {
+    border: 1px solid var(--app-border-strong);
+    padding: 6px 10px;
+    color: var(--app-ink);
+}
+
+.nota-table th {
+    background: var(--app-surface-elevated) !important;
+    color: var(--app-primary) !important;
+    font-weight: 700;
+}
+
+.nota-table td {
+    background: var(--app-surface);
+}
+
+.nota-row {
+    background: var(--app-surface) !important;
+    border-color: var(--app-border) !important;
+    color: var(--app-ink);
+}
+
+.contrib-footer,
+.contrib-footer .text-caption {
+    color: var(--app-ink-muted);
+}
+
+.contrib-root .text-subtitle2 {
+    color: var(--app-ink);
+}
+
+.contrib-root .q-tabs {
+    color: var(--app-ink);
+}
+
+.contrib-root .q-tab {
+    color: var(--app-ink-muted);
+}
+
+.contrib-root .q-tab--active {
+    color: var(--app-primary) !important;
+}
+
+// ── Tabs ──
+.q-tabs {
+    font-family: var(--app-font);
+    background: linear-gradient(180deg, #f4faf8 0%, #eef5f3 100%);
+    border-bottom: 1px solid var(--app-border);
+}
+
+.q-tab {
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    min-height: 46px;
+}
+
+.q-tab--active {
+    color: var(--app-primary) !important;
+}
+
+.q-tab-panels {
+    background: transparent !important;
+}
+
+.q-tabs__content {
+    padding: 0 6px;
+}
+
+.module-card > .q-card__section:first-child,
+.q-card > .q-tabs {
+    border-radius: var(--app-radius) var(--app-radius) 0 0;
+}
+
+// ── Dialogs ──
+.q-dialog__backdrop {
+    backdrop-filter: blur(8px) saturate(140%);
+    background: rgba(15, 23, 42, 0.42) !important;
+}
+
+.q-dialog .q-card {
+    border-radius: var(--app-radius-lg) !important;
+}
+
+// ── Legacy hub cards ──
+.card {
+    transition: transform 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
+    background-color: var(--app-surface);
+    z-index: 2;
+    box-shadow: var(--app-shadow-md);
+    border-radius: var(--app-radius);
+    border: 1px solid var(--app-border);
+}
+
+.card:hover {
+    transform: translateY(-5px) scale(1.02);
+    background: linear-gradient(146deg, #0f766e 0%, #14b8a6 121%);
+    color: #ffffff;
+    box-shadow: var(--app-shadow-lg);
+}
+
+.card:hover .li {
+    color: #ffffff;
+}
+
+.jj {
+    width: 90%;
+    margin: auto;
+}
+
+.jj .card {
+    transition: all 0.35s ease;
+    margin-top: 2rem;
+}
+
+.icon-container {
+    padding: 2px;
+    display: flex;
+    justify-content: left;
+    z-index: 1;
+}
+
+.ico {
+    margin-top: 0.5rem;
+    color: #0f172a;
+    padding: 4px;
+    background: linear-gradient(146deg, #0f766e 0%, #5eead4 121%);
+    border-radius: 10px;
+    text-align: left;
+    box-shadow: 0 8px 20px rgba(15, 118, 110, 0.18);
+}
+
+.card:hover .ico {
+    color: #ffffff;
+}
+
+.text-container {
+    text-align: left;
+}
+
+.li {
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #0f766e;
+}
+
+.card-title {
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.ll {
+    margin-top: 0.6rem;
+    margin-left: 1rem;
+}
+
+.t {
+    background: secondary;
+    color: white;
+}
+
+.h {
+    justify-content: space-between;
+}
+
+.iq {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0.5rem;
+}
+
+.iq span,
+.iq i {
+    color: white;
+}
+
+.cortarColumna {
+    overflow: hidden;
+    max-width: 150px;
+    white-space: nowrap;
+}
+
+/* Expansion headers outside the sidebar keep a readable default.
+   Sidebar menu defines its own level-based sizes in EssentialLink. */
+.q-expansion-item__header:not(.menu-expansion-header),
+.q-expansion-item__header:not(.menu-expansion-header) .q-item__label,
+.q-expansion-item__header:not(.menu-expansion-header) .q-item-label {
+    font-size: 14.5px !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    color: inherit !important;
+}
+
+// ── Shared page kit ──
+.page-shell {
+    /* Laptops: 1400; monitores ≥19"/widescreen: más ancho sin tocar pantallas chicas */
+    max-width: min(1400px, 100%);
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    animation: pageEnter 0.45s ease both;
+}
+
+@media (min-width: 1600px) {
+    .page-shell {
+        max-width: min(1680px, 100%);
+    }
+}
+
+@media (min-width: 1800px) {
+    .page-shell {
+        max-width: min(1840px, 100%);
+    }
+}
+
+@media (min-width: 1920px) {
+    .page-shell {
+        max-width: min(1960px, calc(100vw - 320px));
+    }
+}
+
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    margin-bottom: clamp(0.85rem, 1.5vw, 1.35rem);
+    padding: clamp(0.75rem, 1.2vw, 1rem) clamp(0.85rem, 1.4vw, 1.15rem);
+    border-radius: var(--app-radius);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(240, 250, 248, 0.88));
+    border: 1px solid var(--app-border);
+    box-shadow: var(--app-shadow-sm);
+}
+
+.page-title {
+    font-family: var(--app-font);
+    font-size: clamp(1.15rem, 1rem + 0.6vw, 1.4rem);
+    font-weight: 800;
+    color: var(--app-ink);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+}
+
+.page-title--display {
+    font-family: var(--app-font-display);
+    font-weight: 600;
+    font-size: clamp(1.35rem, 1.1rem + 1.2vw, 2rem);
+}
+
+.page-subtitle {
+    font-size: clamp(0.8rem, 0.75rem + 0.2vw, 0.88rem);
+    color: var(--app-ink-muted);
+    margin-top: 0.3rem;
+    line-height: 1.4;
+}
+
+.page-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+// Formularios densos: no empujar horizontalmente
+.q-page,
+.page-shell,
+.libro-page {
+    min-width: 0;
+}
+
+.q-card {
+    max-width: 100%;
+}
+
+// Toolbars de listados / filtros
+.q-table__top {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+@media (max-width: 1440px) {
+    .page-shell {
+        max-width: 100%;
+    }
+
+    .hub-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 1280px) {
+    .libro-panels {
+        max-height: calc(100vh - 210px) !important;
+    }
+
+    .libro-table {
+        min-width: 860px;
+        font-size: 10px !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .cortarColumna {
+        max-width: 120px;
+    }
+
+    .jj {
+        width: 95%;
+    }
+
+    .li {
+        font-size: 1.05em;
+    }
+
+    .hub-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+    }
+
+    .page-header {
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    .card {
+        border-radius: 12px;
+    }
+
+    .jj .card {
+        margin-top: 1rem;
+    }
+
+    .iq {
+        padding: 0.4rem;
+    }
+
+    .libro-panels {
+        max-height: calc(100vh - 180px) !important;
+        min-height: 280px !important;
+    }
+}
+
+@keyframes pageEnter {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeRise {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmerSweep {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+// ── Breadcrumbs ──
+.qb {
+    font-family: var(--app-font);
+    font-size: 0.82rem;
+    margin-bottom: 0.35rem;
+}
+
+.qb .q-breadcrumbs__el {
+    color: var(--app-ink-muted);
+}
+
+.qb .q-breadcrumbs__el:last-child {
+    color: var(--app-primary);
+    font-weight: 700;
+}
+
+// ── List group cards (month sections) ──
+.list-group-card {
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(15, 118, 110, 0.14);
+    box-shadow: 0 4px 14px rgba(15, 118, 110, 0.06);
+    background: var(--app-surface, #fff);
+}
+
+.list-group-header,
+.list-group-footer {
+    background: #14b8a6 !important;
+    color: #ecfdf5 !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: none;
+    padding: 10px 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em;
+}
+
+.list-group-header {
+    margin-bottom: 0.65rem;
+    border-bottom: 1px solid rgba(15, 118, 110, 0.18) !important;
+}
+
+.list-group-footer {
+    margin-top: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    border-top: 1px solid rgba(15, 118, 110, 0.18) !important;
+}
+
+.bg-deep-purple-2 {
+    background:
+        linear-gradient(90deg, #0f766e 0%, #0d9488 55%, #14b8a6 100%) !important;
+    color: #ecfdf5 !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 8px 20px rgba(15, 118, 110, 0.18);
+    padding: 10px 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em;
+}
+
+.list-group-card .list-group-header,
+.list-group-card .list-group-footer {
+    margin: 0;
+    border-radius: 0 !important;
+    box-shadow: none;
+}
+
+.list-group-card .q-table {
+    box-shadow: none;
+}
+
+.list-group-card .q-table__container {
+    border-radius: 0 !important;
+}
+
+.list-group-card .q-table thead tr th {
+    background: #f1f5f9 !important;
+}
+
+.q-page {
+    animation: pageEnter 0.4s ease both;
+}
+
+// ── Dark mode: superficies y texto con contraste real ──
+body.body--dark {
+    color: var(--app-ink);
+    background: var(--app-page-bg);
+    background-attachment: fixed;
+
+    .q-card {
+        background: var(--app-card-shine), var(--app-surface) !important;
+        border-color: var(--app-border) !important;
+        color: var(--app-ink);
+    }
+
+    .q-field--outlined .q-field__control {
+        background: #243447;
+    }
+
+    .q-field--outlined.q-field--focused .q-field__control {
+        background: #2a3b52;
+        box-shadow: 0 0 0 4px var(--app-primary-soft);
+    }
+
+    .q-field__native,
+    .q-field__input,
+    .q-field__prefix,
+    .q-field__suffix {
+        color: #f1f5f9 !important;
+    }
+
+    .q-field__label {
+        color: #cbd5e1 !important;
+    }
+
+    .q-table {
+        background: var(--app-surface) !important;
+        color: var(--app-ink);
+    }
+
+    .q-table__top,
+    .q-table__bottom {
+        background: #162033 !important;
+        color: #f1f5f9 !important;
+    }
+
+    .q-table__title,
+    .q-table__title.text-black,
+    .text-black.q-table__title {
+        color: #f1f5f9 !important;
+    }
+
+    /* Barras de mes / grupo: verde claro (anula text-black de Quasar) */
+    .list-group-card {
+        background: var(--app-surface) !important;
+        border-color: rgba(45, 212, 191, 0.22) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    }
+
+    .list-group-header,
+    .list-group-header.text-black,
+    .list-group-footer,
+    .list-group-footer.text-black {
+        background: #14b8a6 !important;
+        color: #ecfdf5 !important;
+        border-color: rgba(45, 212, 191, 0.2) !important;
+    }
+
+    .list-group-footer {
+        background: #14b8a6 !important;
+        color: #ecfdf5 !important;
+    }
+
+    .list-group-header *,
+    .list-group-footer * {
+        color: inherit !important;
+    }
+
+    .list-group-card .q-table thead tr th {
+        background: #243447 !important;
+    }
+
+    .bg-deep-purple-2,
+    .bg-deep-purple-2.text-black {
+        color: #ecfdf5 !important;
+    }
+
+    .bg-deep-purple-2 * {
+        color: inherit !important;
+    }
+
+    .q-table thead tr th {
+        background: linear-gradient(180deg, #1f3348 0%, #17293a 100%) !important;
+        color: #99f6e4 !important;
+    }
+
+    .q-table tbody td {
+        color: #e2e8f0 !important;
+        border-bottom-color: var(--app-border) !important;
+    }
+
+    .q-table tbody tr:nth-child(even) td {
+        background: rgba(2, 6, 23, 0.45) !important;
+    }
+
+    .q-table tbody tr:hover td {
+        background: rgba(45, 212, 191, 0.12) !important;
+    }
+
+    .q-tabs {
+        background: linear-gradient(180deg, #162033 0%, #111827 100%);
+        border-bottom-color: var(--app-border);
+    }
+
+    .q-tab {
+        color: #94a3b8;
+    }
+
+    .q-tab--active {
+        color: #2dd4bf !important;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.92));
+        border-color: var(--app-border);
+    }
+
+    .page-title,
+    .page-subtitle {
+        color: var(--app-ink) !important;
+    }
+
+    .page-subtitle {
+        color: var(--app-ink-muted) !important;
+    }
+
+    .page-header .q-field__native,
+    .page-header .q-field__input,
+    .page-toolbar .q-field__native,
+    .page-toolbar .q-field__input {
+        color: #f1f5f9 !important;
+    }
+
+    .page-header .q-field__label,
+    .page-toolbar .q-field__label {
+        color: #cbd5e1 !important;
+    }
+
+    .page-header .q-icon,
+    .page-toolbar .q-icon,
+    .row.q-mb-md .q-icon {
+        color: #99f6e4;
+    }
+
+    .fiscal-table {
+        background: var(--app-surface);
+        border-color: var(--app-border-strong);
+    }
+
+    .fiscal-table th,
+    .fiscal-table td {
+        color: var(--app-ink);
+        border-color: var(--app-border);
+    }
+
+    .fiscal-table thead th {
+        background: linear-gradient(180deg, #134e4a 0%, #0f766e 100%) !important;
+        color: #ccfbf1 !important;
+    }
+
+    .fiscal-table tbody tr:nth-child(even) td {
+        background: rgba(2, 6, 23, 0.5);
+    }
+
+    .fiscal-table tbody tr:hover td {
+        background: rgba(45, 212, 191, 0.12);
+    }
+
+    .q-drawer {
+        background: transparent !important;
+    }
+
+    .q-drawer.app-drawer {
+        background: transparent !important;
+    }
+
+    .q-menu {
+        background: #1e293b !important;
+        color: #f1f5f9;
+        border: 1px solid var(--app-border);
+    }
+
+    .header-select-menu {
+        background: #1e293b !important;
+    }
+
+    .header-select-menu .q-item,
+    .header-select-menu .q-item__label,
+    .header-select-menu .q-item__section {
+        color: #f1f5f9 !important;
+    }
+
+    .q-banner.bg-warning,
+    .q-banner.bg-orange-1 {
+        background: linear-gradient(105deg, #422006 0%, #78350f 100%) !important;
+        color: #fde68a !important;
+    }
+
+    .q-banner.bg-info,
+    .q-banner.bg-blue-1,
+    .q-banner.bg-teal-1 {
+        background: linear-gradient(105deg, #134e4a 0%, #115e59 100%) !important;
+        color: #ccfbf1 !important;
+    }
+
+    /* Libro ingresos/gastos — tablas HTML con fondos claros fijos */
+    .libro-subtitle {
+        color: #cbd5e1 !important;
+    }
+
+    .libro-table {
+        background: #1e293b !important;
+        color: #e2e8f0 !important;
+    }
+
+    .libro-table thead tr,
+    .libro-table thead th {
+        background: #243447 !important;
+        color: #99f6e4 !important;
+        border-color: rgba(148, 163, 184, 0.22) !important;
+    }
+
+    .libro-table tbody td,
+    .libro-table tfoot td {
+        color: #e2e8f0 !important;
+        border-color: rgba(148, 163, 184, 0.18) !important;
+        background: #1e293b !important;
+    }
+
+    .libro-table tbody tr:nth-child(even) td {
+        background: #162033 !important;
+        color: #e2e8f0 !important;
+    }
+
+    .libro-table tbody tr:nth-child(odd) td {
+        background: #1e293b !important;
+        color: #e2e8f0 !important;
+    }
+
+    .libro-table td[style*='background:#fafafa'],
+    .libro-table td[style*='background: #fafafa'],
+    .libro-table td[style*='background:#f5f5f5'],
+    .libro-table td[style*='background: #f5f5f5'],
+    .libro-table td[style*='background:#e8f5e9'],
+    .libro-table td[style*='background: #e8f5e9'],
+    .libro-table th[style*='background:#e8f5e9'],
+    .libro-table th[style*='background: #e8f5e9'],
+    .libro-table tr[style*='background: #f5f5f7'],
+    .libro-table tr[style*='background:#f5f5f7'],
+    .libro-table tr[style*='background: #c8e6c9'],
+    .libro-table tr[style*='background:#c8e6c9'],
+    .libro-table tr[style*='background: #e0e0e0'],
+    .libro-table tr[style*='background:#e0e0e0'],
+    .libro-table td[style*='background:#c8e6c9'],
+    .libro-table td[style*='background: #c8e6c9'] {
+        background: #243447 !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* Columna TOTAL ANUAL */
+    .libro-table th[style*='#e8f5e9'],
+    .libro-table td[style*='#e8f5e9'],
+    .libro-table td[style*='#2e7d32'],
+    .libro-table td[style*='color:#2e7d32'],
+    .libro-table td[style*='color: #2e7d32'] {
+        background: #134e4a !important;
+        color: #5eead4 !important;
+    }
+
+    .libro-table tfoot tr,
+    .libro-table tfoot td {
+        background: #115e59 !important;
+        color: #ecfdf5 !important;
+        border-color: rgba(45, 212, 191, 0.35) !important;
+    }
+
+    .libro-page .q-card,
+    .libro-page .q-tab-panels {
+        background: #1e293b !important;
+        color: #e2e8f0;
+    }
+
+    .libro-scroll {
+        border-color: rgba(148, 163, 184, 0.22);
+    }
+}
+
+.account-popup {
+    max-width: min(520px, 95vw) !important;
+}
+
+.account-popup .q-item__label {
+    white-space: normal;
+    word-break: break-word;
+}
