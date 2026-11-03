@@ -3,7 +3,8 @@ import axios from 'axios'
 import { Notify } from 'quasar'
 import { clearStoredSession, getStoredSession } from 'src/assets/js/util/authStorage'
 
-const api = axios.create({ baseURL: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8002/api' })
+// Without VITE_API_BASE_URL the API is served from the page origin (desktop package, or the dev proxy on /api)
+const api = axios.create({ baseURL: process.env.VITE_API_BASE_URL || `${window.location.origin}/api` })
 let sessionExpiredLock = false
 
 /**
