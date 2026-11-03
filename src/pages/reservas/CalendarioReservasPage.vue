@@ -189,13 +189,23 @@
                         <span class="legend-dot" :style="{ background: item.color }" />
                         {{ item.label }}
                     </span>
-                    <span v-if="viewMode === 'mensual'" class="legend-keys">
-                        <span class="legend-key"><span class="legend-swatch is-arrival" />Llegada</span>
-                        <span class="legend-key"><span class="legend-swatch" />Estancia</span>
-                        <span class="legend-key"><span class="legend-swatch is-pendiente" />Pendiente</span>
+                    <span class="legend-keys">
+                        <template v-if="viewMode === 'mensual'">
+                            <span class="legend-key"><span class="legend-swatch is-arrival" />Llegada</span>
+                            <span class="legend-key"><span class="legend-swatch" />Estancia</span>
+                            <span class="legend-key"><span class="legend-swatch is-pendiente" />Pendiente</span>
+                        </template>
                         <span class="legend-key">
-                            <q-icon name="local_taxi" size="14px" class="cal-ev-taxi" />
-                            Falta taxi
+                            <q-icon name="local_taxi" size="14px" />
+                            Taxi <b>L</b> llegada · <b>S</b> salida
+                        </span>
+                        <span class="legend-key">
+                            <span class="cal-taxi is-ok">L<q-icon name="check" size="10px" /></span>
+                            Solicitado
+                        </span>
+                        <span class="legend-key">
+                            <span class="cal-taxi is-warn">L<q-icon name="close" size="10px" /></span>
+                            Sin taxi
                         </span>
                     </span>
                 </div>
@@ -280,25 +290,37 @@
                                     @click.stop="openReserva(ev)"
                                 >
                                     <span class="cal-ev-bar" />
-                                    <span class="cal-ev-name">{{ ev.cliente_nombre }}</span>
-                                    <span
-                                        v-if="ev.fecha_entrada === scope.timestamp.date && ev.hora_llegada"
-                                        class="cal-ev-time"
-                                    >
-                                        {{ ev.hora_llegada }}
+                                    <span class="cal-ev-body">
+                                        <span class="cal-ev-top">
+                                            <span class="cal-ev-name">{{ ev.cliente_nombre }}</span>
+                                            <span
+                                                v-if="ev.fecha_entrada === scope.timestamp.date && ev.hora_llegada"
+                                                class="cal-ev-time"
+                                            >
+                                                {{ ev.hora_llegada }}
+                                            </span>
+                                        </span>
+                                        <span class="cal-ev-taxis">
+                                            <q-icon name="local_taxi" size="12px" class="cal-ev-taxi-icon" />
+                                            <span
+                                                v-for="flag in taxiFlags(ev)"
+                                                :key="flag.key"
+                                                class="cal-taxi"
+                                                :class="flag.ok ? 'is-ok' : 'is-warn'"
+                                            >
+                                                {{ flag.letter }}
+                                                <q-icon :name="flag.ok ? 'check' : 'close'" size="10px" />
+                                            </span>
+                                        </span>
                                     </span>
-                                    <q-icon
-                                        v-if="ev.fecha_entrada === scope.timestamp.date && hasMissingTaxi(ev)"
-                                        name="local_taxi"
-                                        size="13px"
-                                        class="cal-ev-taxi"
-                                    />
                                     <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 6]">
                                         <div class="text-weight-bold">{{ ev.cliente_nombre }}</div>
                                         <div>{{ ev.habitacion_nombre }} · {{ ev.cantidad_personas }} pax</div>
                                         <div>{{ formatDayShort(ev.fecha_entrada) }} → {{ formatDayShort(ev.fecha_salida) }}</div>
                                         <div v-if="ev.estado === 'pendiente'">Pendiente de confirmar</div>
-                                        <div v-if="hasMissingTaxi(ev)">{{ formatTaxiAlerta(ev) }}</div>
+                                        <div v-for="flag in taxiFlags(ev)" :key="flag.key">
+                                            {{ flag.label }}: {{ flag.ok ? 'solicitado' : 'sin taxi' }}
+                                        </div>
                                     </q-tooltip>
                                 </button>
 
@@ -588,7 +610,7 @@
                             <div class="rv-transfer">
                                 <q-icon name="flight_land" size="18px" class="rv-transfer-icon" />
                                 <span class="rv-transfer-label">Llegada</span>
-                                <span class="rv-pill" :class="activeReserva.taxi_llegada ? 'is-ok' : 'is-warn'">
+                                <span class="rv-pill" :class="activeReserva.taxi_llegada ? 'is-ok' : 'is-danger'">
                                     <q-icon :name="activeReserva.taxi_llegada ? 'check' : 'priority_high'" size="13px" />
                                     {{ activeReserva.taxi_llegada ? 'Solicitado' : 'Sin taxi' }}
                                 </span>
@@ -596,7 +618,7 @@
                             <div class="rv-transfer">
                                 <q-icon name="flight_takeoff" size="18px" class="rv-transfer-icon" />
                                 <span class="rv-transfer-label">Salida</span>
-                                <span class="rv-pill" :class="activeReserva.taxi_salida ? 'is-ok' : 'is-warn'">
+                                <span class="rv-pill" :class="activeReserva.taxi_salida ? 'is-ok' : 'is-danger'">
                                     <q-icon :name="activeReserva.taxi_salida ? 'check' : 'priority_high'" size="13px" />
                                     {{ activeReserva.taxi_salida ? 'Solicitado' : 'Sin taxi' }}
                                 </span>
@@ -690,9 +712,19 @@
                                     </span>
                                 </span>
                                 <span v-if="ev.estado === 'pendiente'" class="rv-pill is-warn">Pendiente</span>
-                                <q-icon v-if="hasMissingTaxi(ev)" name="local_taxi" size="16px" class="cal-ev-taxi">
-                                    <q-tooltip>{{ formatTaxiAlerta(ev) }}</q-tooltip>
-                                </q-icon>
+                                <span class="cal-ev-taxis">
+                                    <q-icon name="local_taxi" size="14px" class="cal-ev-taxi-icon" />
+                                    <span
+                                        v-for="flag in taxiFlags(ev)"
+                                        :key="flag.key"
+                                        class="cal-taxi"
+                                        :class="flag.ok ? 'is-ok' : 'is-warn'"
+                                    >
+                                        {{ flag.letter }}
+                                        <q-icon :name="flag.ok ? 'check' : 'close'" size="10px" />
+                                        <q-tooltip>{{ flag.label }}: {{ flag.ok ? 'solicitado' : 'sin taxi' }}</q-tooltip>
+                                    </span>
+                                </span>
                                 <q-icon name="chevron_right" size="18px" class="rv-day-chevron" />
                             </button>
                         </div>
@@ -1330,6 +1362,13 @@ function initials(name) {
     return `${first}${last}`.toUpperCase()
 }
 
+function taxiFlags(ev) {
+    return [
+        { key: 'llegada', letter: 'L', label: 'Taxi llegada', ok: Boolean(ev?.taxi_llegada) },
+        { key: 'salida', letter: 'S', label: 'Taxi salida', ok: Boolean(ev?.taxi_salida) }
+    ]
+}
+
 function monthDayClass({ scope }) {
     const weekday = Number(scope?.timestamp?.weekday)
     return { 'is-weekend': weekday === 0 || weekday === 6 }
@@ -1892,6 +1931,9 @@ onMounted(async () => {
     --plan-ok-bg: rgba(16, 185, 129, 0.12);
     --plan-warn-ink: #b45309;
     --plan-warn-bg: rgba(245, 158, 11, 0.14);
+    --plan-danger: #dc2626;
+    --plan-danger-ink: #b91c1c;
+    --plan-danger-bg: rgba(239, 68, 68, 0.12);
 }
 
 :global(body.body--dark) {
@@ -1918,6 +1960,9 @@ onMounted(async () => {
     --plan-ok-bg: rgba(16, 185, 129, 0.16);
     --plan-warn-ink: #fcd34d;
     --plan-warn-bg: rgba(245, 158, 11, 0.14);
+    --plan-danger: #f87171;
+    --plan-danger-ink: #fca5a5;
+    --plan-danger-bg: rgba(239, 68, 68, 0.18);
 }
 
 .planning-page {
@@ -2246,11 +2291,10 @@ onMounted(async () => {
 .cal-ev {
     appearance: none;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 6px;
     width: 100%;
     min-width: 0;
-    height: 24px;
     padding: 0 6px 0 0;
     border: 0;
     border-radius: 7px;
@@ -2278,6 +2322,57 @@ onMounted(async () => {
     flex-shrink: 0;
     width: 3px;
     background: color-mix(in srgb, var(--room-color) 55%, transparent);
+}
+
+.cal-ev-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 3px 0 4px;
+}
+
+.cal-ev-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.cal-ev-taxis {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.cal-ev-taxi-icon {
+    color: var(--plan-muted);
+}
+
+.cal-taxi {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    height: 15px;
+    padding: 0 4px 0 5px;
+    border-radius: 999px;
+    font-size: 9.5px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.cal-taxi.is-ok {
+    color: var(--plan-ok-ink);
+    background: var(--plan-ok-bg);
+}
+
+.cal-taxi.is-warn {
+    color: var(--plan-danger-ink);
+    background: var(--plan-danger-bg);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--plan-danger) 45%, transparent);
 }
 
 .cal-ev-name {
@@ -2318,11 +2413,6 @@ onMounted(async () => {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--plan-muted);
-}
-
-.cal-ev-taxi {
-    flex-shrink: 0;
-    color: var(--plan-warn);
 }
 
 .mday-more {
@@ -2414,7 +2504,7 @@ onMounted(async () => {
 }
 
 .taxi-flag-warn {
-    color: var(--plan-warn-ink);
+    color: var(--plan-danger-ink);
 }
 
 .book-taxi-flags {
@@ -3079,6 +3169,11 @@ onMounted(async () => {
 .rv-pill.is-warn {
     color: var(--plan-warn-ink);
     background: var(--plan-warn-bg);
+}
+
+.rv-pill.is-danger {
+    color: var(--plan-danger-ink);
+    background: var(--plan-danger-bg);
 }
 
 .rv-hint {
