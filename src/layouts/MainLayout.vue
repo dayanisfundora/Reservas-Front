@@ -55,6 +55,26 @@
                         @update:model-value="handleCasaChange"
                     />
                     <q-btn
+                        v-if="canSeeNotificaciones"
+                        flat
+                        round
+                        dense
+                        class="notif-bell"
+                        icon="notifications"
+                        @click="notificacionesStore.toggleDrawer()"
+                    >
+                        <q-badge
+                            v-if="notificacionesStore.badgeCount"
+                            color="negative"
+                            floating
+                            rounded
+                        >
+                            {{ notificacionesStore.badgeCount > 99 ? '99+' : notificacionesStore.badgeCount }}
+                        </q-badge>
+                        <q-tooltip>Llegadas próximas</q-tooltip>
+                    </q-btn>
+
+                    <q-btn
                         flat
                         round
                         dense
@@ -124,16 +144,20 @@
         <q-page-container class="page-container">
             <router-view />
         </q-page-container>
+
+        <NotificacionesDrawer v-if="canSeeNotificaciones" />
     </q-layout>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRoute, useRouter } from 'vue-router'
 import EssentialLink from 'src/components/EssentialLink.vue'
+import NotificacionesDrawer from 'src/components/notificaciones/NotificacionesDrawer.vue'
 import { useAuthStore } from 'src/stores/auth-store'
 import { useEmpresaStore } from 'src/stores/empresa-store'
+import { useNotificacionesStore } from 'src/stores/notificaciones-store'
 import { useProyectoStore } from 'src/stores/proyecto-store'
 import { useThemeStore } from 'src/stores/theme-store'
 import { useProyectoContext } from 'src/composables/useProyectoContext'
@@ -152,7 +176,10 @@ const authStore = useAuthStore()
 const empresaStore = useEmpresaStore()
 const proyectoStore = useProyectoStore()
 const themeStore = useThemeStore()
+const notificacionesStore = useNotificacionesStore()
 const { casaFilterOptions } = useProyectoContext()
+
+const canSeeNotificaciones = computed(() => authStore.hasPermission('ver_reservas'))
 
 /** Más estrecho en laptops para ganar área de contenido */
 const drawerWidth = computed(() => ($q.screen.width < 1440 ? 252 : 288))
@@ -205,6 +232,13 @@ function handleCasaChange(casaId) {
     window.location.reload()
 }
 
+watch(
+    () => proyectoStore.casaActivaId,
+    () => {
+        if (canSeeNotificaciones.value) notificacionesStore.refresh()
+    }
+)
+
 onMounted(async () => {
     if (authStore.token && empresaStore.empresaActivaId && !proyectoStore.initialized) {
         try {
@@ -213,6 +247,13 @@ onMounted(async () => {
             // Pages can retry catalog loading if needed.
         }
     }
+    if (canSeeNotificaciones.value) {
+        notificacionesStore.startPolling()
+    }
+})
+
+onBeforeUnmount(() => {
+    notificacionesStore.stopPolling()
 })
 
 /**
@@ -221,6 +262,8 @@ onMounted(async () => {
  * @returns {Promise<void>}
  */
 async function handleLogout() {
+    notificacionesStore.stopPolling()
+    notificacionesStore.closeDrawer()
     await authStore.logout()
     await router.replace({ name: 'Login' })
 }
@@ -351,15 +394,23 @@ async function handleLogout() {
     border-color: var(--app-shell-control-border) !important;
 }
 
-.theme-toggle {
+.theme-toggle,
+.notif-bell {
     color: var(--app-primary) !important;
     background: var(--app-shell-control-bg);
     border: 1px solid var(--app-shell-control-border);
 }
 
-.theme-toggle:hover {
+.theme-toggle:hover,
+.notif-bell:hover {
     border-color: rgba(15, 118, 110, 0.35);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.notif-bell :deep(.q-badge) {
+    font-size: 10px;
+    padding: 2px 5px;
+    min-height: 16px;
 }
 
 .user-chip {
@@ -596,7 +647,8 @@ body.body--dark .header-select-menu .q-item__section {
     color: var(--app-shell-accent) !important;
 }
 
-.app-header .theme-toggle {
+.app-header .theme-toggle,
+.app-header .notif-bell {
     color: var(--app-primary) !important;
     background: var(--app-shell-control-bg) !important;
     border-color: var(--app-shell-control-border) !important;

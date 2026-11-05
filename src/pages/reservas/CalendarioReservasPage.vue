@@ -149,8 +149,8 @@
                             color="teal"
                             icon="picture_as_pdf"
                             label="PDF"
-                            :loading="exportingPdf"
-                            :disable="loading || exportingPdf"
+                            :loading="downloadingPdf"
+                            :disable="loading || downloadingPdf || printingPdf"
                             @click="downloadCalendarPdf"
                         >
                             <q-tooltip>Descargar PDF de la vista actual</q-tooltip>
@@ -161,8 +161,8 @@
                             color="teal"
                             icon="print"
                             label="Imprimir"
-                            :loading="exportingPdf"
-                            :disable="loading || exportingPdf"
+                            :loading="printingPdf"
+                            :disable="loading || downloadingPdf || printingPdf"
                             @click="printCalendarPdf"
                         >
                             <q-tooltip>Imprimir PDF de la vista actual</q-tooltip>
@@ -182,7 +182,7 @@
                 <div
                     ref="calendarExportRef"
                     class="calendar-export-root"
-                    :class="{ 'is-exporting': exportingPdf }"
+                    :class="{ 'is-exporting': downloadingPdf || printingPdf }"
                 >
                 <div class="legend-row">
                     <span v-for="item in legend" :key="item.key" class="legend-item">
@@ -244,17 +244,20 @@
                             </span>
                         </template>
                         <template #day="{ scope }">
-                            <div
-                                class="mday"
-                                @mouseenter="hoverDay = scope.timestamp.date"
-                                @mouseleave="hoverDay = null"
-                            >
+                            <div class="mday">
                                 <div class="mday-corner">
                                     <span
                                         v-if="dayEventsMap[scope.timestamp.date]?.length"
                                         class="mday-count"
                                     >
-                                        <q-icon name="king_bed" size="12px" />
+                                        <!-- Misma cama del favicon.svg -->
+                                        <svg class="mday-bed-icon" viewBox="10 18 44 32" aria-hidden="true">
+                                            <rect x="10" y="18" width="5" height="32" rx="2" fill="currentColor"/>
+                                            <rect x="15" y="34" width="39" height="9" rx="2" fill="currentColor"/>
+                                            <rect x="49" y="34" width="5" height="16" rx="2" fill="currentColor"/>
+                                            <rect x="18" y="26" width="11" height="7" rx="3" fill="currentColor"/>
+                                            <path d="M31 26h17a6 6 0 0 1 6 6v2H31z" fill="currentColor"/>
+                                        </svg>
                                         {{ dayEventsMap[scope.timestamp.date].length }}
                                         <q-tooltip>
                                             {{ dayEventsMap[scope.timestamp.date].length }}
@@ -262,19 +265,16 @@
                                             este día
                                         </q-tooltip>
                                     </span>
-                                    <q-btn
-                                        v-if="canManage && hoverDay === scope.timestamp.date"
-                                        round
-                                        dense
-                                        unelevated
-                                        size="xs"
-                                        color="primary"
-                                        icon="add"
+                                    <button
+                                        v-if="canManage"
+                                        type="button"
                                         class="day-add-btn"
+                                        aria-label="Nueva reserva este día"
                                         @click.stop="goCreate(null, scope.timestamp.date)"
                                     >
+                                        <q-icon name="add" size="14px" />
                                         <q-tooltip>Nueva reserva este día</q-tooltip>
-                                    </q-btn>
+                                    </button>
                                 </div>
 
                                 <button
@@ -583,7 +583,13 @@
                                 </div>
                             </div>
                             <div class="rv-tile">
-                                <q-icon name="bed" class="rv-tile-icon" />
+                                <svg class="rv-tile-icon rv-tile-bed" viewBox="10 18 44 32" aria-hidden="true">
+                                    <rect x="10" y="18" width="5" height="32" rx="2" fill="currentColor"/>
+                                    <rect x="15" y="34" width="39" height="9" rx="2" fill="currentColor"/>
+                                    <rect x="49" y="34" width="5" height="16" rx="2" fill="currentColor"/>
+                                    <rect x="18" y="26" width="11" height="7" rx="3" fill="currentColor"/>
+                                    <path d="M31 26h17a6 6 0 0 1 6 6v2H31z" fill="currentColor"/>
+                                </svg>
                                 <div>
                                     <div class="rv-label">Camas</div>
                                     <div class="rv-value">{{ formatCamasResumen(activeReserva.camas) }}</div>
@@ -1017,6 +1023,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Notify, date as qdate } from 'quasar'
 import { api } from 'src/boot/axios'
 import { useProyectoStore } from 'src/stores/proyecto-store'
@@ -1040,9 +1047,12 @@ import {
 
 defineOptions({ name: 'CalendarioReservasPage' })
 
+const route = useRoute()
+const router = useRouter()
 const proyectoStore = useProyectoStore()
 const authStore = useAuthStore()
 const canManage = computed(() => authStore.hasPermission('gestionar_reservas'))
+let skipMonthWatch = false
 
 const loading = ref(false)
 const rooms = ref([])
@@ -1051,7 +1061,6 @@ const selectedDate = ref(formatLocalDate(new Date()))
 const viewMode = ref('mensual')
 const search = ref('')
 const selectedHabitacionIds = ref([])
-const hoverDay = ref(null)
 const detailOpen = ref(false)
 const metricsOpen = ref(false)
 const activeReserva = ref(null)
@@ -1059,7 +1068,8 @@ const dayDetailList = ref([])
 const confirmCancel = ref(false)
 const canceling = ref(false)
 const confirming = ref(false)
-const exportingPdf = ref(false)
+const downloadingPdf = ref(false)
+const printingPdf = ref(false)
 const createOpen = ref(false)
 const editingReservaId = ref(null)
 const saving = ref(false)
@@ -1310,8 +1320,16 @@ const typeBars = computed(() => {
 })
 
 watch([casaActivaId, monthKey], () => {
+    if (skipMonthWatch) return
     loadData()
 })
+
+watch(
+    () => [route.query.reserva_id, route.query.fecha],
+    () => {
+        applyReservaDeepLink()
+    }
+)
 
 watch(rooms, (list) => {
     if (!list.length) {
@@ -1461,6 +1479,64 @@ function openReserva(ev) {
     detailOpen.value = true
 }
 
+async function clearReservaQuery() {
+    if (route.query.reserva_id === undefined && route.query.fecha === undefined) return
+    const nextQuery = { ...route.query }
+    delete nextQuery.reserva_id
+    delete nextQuery.fecha
+    await router.replace({ query: nextQuery })
+}
+
+async function applyReservaDeepLink() {
+    const id = Number(route.query.reserva_id)
+    if (!Number.isFinite(id) || id <= 0) return
+
+    const fechaRaw = String(route.query.fecha || '').slice(0, 10)
+    const fecha = /^\d{4}-\d{2}-\d{2}$/.test(fechaRaw) ? fechaRaw : null
+
+    if (fecha) {
+        const monthChanged = selectedDate.value.slice(0, 7) !== fecha.slice(0, 7)
+        selectedDate.value = fecha
+        if (monthChanged) {
+            skipMonthWatch = true
+            try {
+                await loadData()
+            } finally {
+                skipMonthWatch = false
+            }
+        }
+    }
+
+    const roomMap = Object.fromEntries(rooms.value.map((r) => [r.id, r]))
+    const raw = (reservas.value || []).find((r) => Number(r.id) === id)
+    if (!raw) {
+        Notify.create({
+            type: 'warning',
+            message: 'No se encontró esa reserva en el calendario del mes actual.',
+        })
+        await clearReservaQuery()
+        return
+    }
+
+    if (
+        selectedHabitacionIds.value.length
+        && !selectedHabitacionIds.value.includes(raw.habitacion_id)
+    ) {
+        selectedHabitacionIds.value = [...selectedHabitacionIds.value, raw.habitacion_id]
+    }
+
+    const room = raw.habitacion || roomMap[raw.habitacion_id] || {}
+    openReserva({
+        ...raw,
+        taxi_llegada: Boolean(raw.taxi_llegada),
+        taxi_salida: Boolean(raw.taxi_salida),
+        habitacion_nombre: room.nombre || 'Habitación',
+        habitacion_tipo: room.tipo || 'privada',
+        habitacion_color: room.color || roomColor(roomMap[raw.habitacion_id] || room),
+    })
+    await clearReservaQuery()
+}
+
 function resetDetailState() {
     confirmCancel.value = false
     canceling.value = false
@@ -1484,12 +1560,12 @@ function buildExportFilename() {
     return `calendario_${viewMode.value}_${safe}.pdf`
 }
 
-async function withExpandedCalendar(run) {
-    exportingPdf.value = true
+async function withExpandedCalendar(busyRef, run) {
+    busyRef.value = true
     try {
         return await run()
     } finally {
-        exportingPdf.value = false
+        busyRef.value = false
     }
 }
 
@@ -1539,8 +1615,9 @@ async function parseBlobError(blob) {
 }
 
 async function downloadCalendarPdf() {
+    if (downloadingPdf.value || printingPdf.value) return
     try {
-        const { blob, filename } = await withExpandedCalendar(() => requestCalendarPdf())
+        const { blob, filename } = await withExpandedCalendar(downloadingPdf, () => requestCalendarPdf())
         if (blob.type.includes('application/json')) {
             throw new Error((await parseBlobError(blob)) || 'No se pudo generar el PDF.')
         }
@@ -1555,8 +1632,9 @@ async function downloadCalendarPdf() {
 }
 
 async function printCalendarPdf() {
+    if (downloadingPdf.value || printingPdf.value) return
     try {
-        const { blob } = await withExpandedCalendar(() => requestCalendarPdf())
+        const { blob } = await withExpandedCalendar(printingPdf, () => requestCalendarPdf())
         if (blob.type.includes('application/json')) {
             throw new Error((await parseBlobError(blob)) || 'No se pudo generar el PDF.')
         }
@@ -1898,7 +1976,17 @@ onMounted(async () => {
     if (!proyectoStore.initialized) {
         await proyectoStore.refreshCatalog()
     }
-    await loadData()
+    const fechaRaw = String(route.query.fecha || '').slice(0, 10)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fechaRaw)) {
+        selectedDate.value = fechaRaw
+    }
+    skipMonthWatch = true
+    try {
+        await loadData()
+    } finally {
+        skipMonthWatch = false
+    }
+    await applyReservaDeepLink()
 })
 </script>
 
@@ -2273,7 +2361,7 @@ onMounted(async () => {
 .mday-count {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
     padding: 1px 7px 1px 5px;
     border-radius: 999px;
     font-size: 11px;
@@ -2284,8 +2372,54 @@ onMounted(async () => {
     border: 1px solid var(--plan-border);
 }
 
+.mday-bed-icon {
+    width: 15px;
+    height: 11px;
+    flex-shrink: 0;
+    display: block;
+}
+
 .day-add-btn {
-    box-shadow: 0 4px 10px var(--plan-brand-soft);
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--plan-brand) 45%, var(--plan-border));
+    background: color-mix(in srgb, var(--plan-brand) 10%, var(--plan-surface));
+    color: var(--plan-brand);
+    cursor: pointer;
+    box-shadow: none;
+    opacity: 0.9;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.day-add-btn:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--plan-brand) 18%, var(--plan-surface));
+    border-color: var(--plan-brand);
+}
+
+.day-add-btn:focus-visible {
+    outline: 2px solid var(--plan-brand);
+    outline-offset: 1px;
+}
+
+:global(body.body--dark) .day-add-btn,
+:global(body.app-dark) .day-add-btn {
+    background: color-mix(in srgb, var(--plan-brand) 16%, transparent);
+    border-color: color-mix(in srgb, var(--plan-brand) 40%, transparent);
+    color: color-mix(in srgb, var(--plan-brand) 85%, #fff);
+    box-shadow: none;
+}
+
+:global(body.body--dark) .day-add-btn:hover,
+:global(body.app-dark) .day-add-btn:hover {
+    background: color-mix(in srgb, var(--plan-brand) 28%, transparent);
+    border-color: var(--plan-brand);
 }
 
 .cal-ev {
@@ -3107,6 +3241,13 @@ onMounted(async () => {
     font-size: 18px;
     color: var(--plan-brand);
     background: var(--plan-soft);
+}
+
+svg.rv-tile-bed {
+    width: 30px;
+    height: 30px;
+    padding: 7px;
+    box-sizing: border-box;
 }
 
 .rv-value {

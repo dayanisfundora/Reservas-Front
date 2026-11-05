@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { Notify } from 'quasar'
 import { api, applyDefaultHeaders, clearUnauthorizedLock } from 'src/boot/axios'
-import { clearStoredSession, getStoredSession, setStoredSession } from 'src/assets/js/util/authStorage'
+import { clearStoredSession, getStoredSession, SESSION_MINUTES, setStoredSession } from 'src/assets/js/util/authStorage'
 import { useEmpresaStore } from './empresa-store'
 import { useProyectoStore } from './proyecto-store'
 
@@ -16,20 +16,30 @@ export const useAuthStore = defineStore('auth', {
     hydrateFromStorage() {
       if (this.initialized) return
       const session = getStoredSession()
-      if (session) {
-        this.token = session.token || null
+      if (session?.token) {
+        this.token = session.token
         this.user = session.user || null
         this.permissions = session.permissions || []
         const empresaStore = useEmpresaStore()
         const proyectoStore = useProyectoStore()
         empresaStore.hydrate(session)
         proyectoStore.hydrate(session)
+      } else {
+        this.token = null
+        this.user = null
+        this.permissions = []
       }
       this.initialized = true
     },
     persistSession(extra = {}) {
+      if (!this.token) {
+        clearStoredSession()
+        applyDefaultHeaders()
+        return
+      }
       const empresaStore = useEmpresaStore()
       const proyectoStore = useProyectoStore()
+      const previous = getStoredSession()
       setStoredSession({
         token: this.token,
         user: this.user,
@@ -37,6 +47,7 @@ export const useAuthStore = defineStore('auth', {
         empresas: empresaStore.empresas,
         empresaActivaId: empresaStore.empresaActivaId,
         casaActivaId: proyectoStore.casaActivaId,
+        expiresAt: previous?.expiresAt || (Date.now() + SESSION_MINUTES * 60 * 1000),
         ...extra,
       })
       applyDefaultHeaders()
@@ -53,7 +64,7 @@ export const useAuthStore = defineStore('auth', {
       empresaStore.setEmpresas(payload.empresas || [])
       empresaStore.syncEmpresaActivaFromList()
       proyectoStore.clearContext()
-      this.persistSession()
+      this.persistSession({ expiresAt: Date.now() + SESSION_MINUTES * 60 * 1000 })
       return payload
     },
     async fetchCurrentUser() {

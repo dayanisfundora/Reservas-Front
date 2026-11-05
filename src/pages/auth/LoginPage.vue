@@ -18,7 +18,14 @@
                 <div>
                     <div class="login-brand">
                         <div class="login-brand-icon">
-                            <q-icon name="king_bed" size="20px" />
+                            <!-- Misma cama del favicon.svg -->
+                            <svg class="login-brand-bed" viewBox="10 18 44 32" aria-hidden="true">
+                                <rect x="10" y="18" width="5" height="32" rx="2" fill="currentColor"/>
+                                <rect x="15" y="34" width="39" height="9" rx="2" fill="currentColor"/>
+                                <rect x="49" y="34" width="5" height="16" rx="2" fill="currentColor"/>
+                                <rect x="18" y="26" width="11" height="7" rx="3" fill="currentColor"/>
+                                <path d="M31 26h17a6 6 0 0 1 6 6v2H31z" fill="currentColor"/>
+                            </svg>
                         </div>
                         <span class="login-brand-name">Reservas</span>
                     </div>
@@ -383,13 +390,19 @@ async function requestPasswordReset() {
 .login-brand-icon {
     width: 38px;
     height: 38px;
-    border-radius: 12px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #0f172a;
     background: linear-gradient(135deg, #99f6e4 0%, #5eead4 45%, #14b8a6 100%);
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.login-brand-bed {
+    width: 22px;
+    height: 16px;
+    display: block;
 }
 
 .login-brand-name {
