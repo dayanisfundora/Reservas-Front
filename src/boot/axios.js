@@ -21,7 +21,9 @@ function applyDefaultHeaders() {
 }
 
 function expireSession() {
-  if (sessionExpiredLock || !getStoredSession()?.token) return
+  if (sessionExpiredLock) return
+  const hadSession = Boolean(getStoredSession()?.token || api.defaults.headers.common.Authorization)
+  if (!hadSession) return
   sessionExpiredLock = true
   clearStoredSession()
   delete api.defaults.headers.common.Authorization
@@ -37,7 +39,13 @@ api.interceptors.request.use((config) => {
     return Promise.reject(new axios.Cancel('session-expired'))
   }
 
+  // getStoredSession() ya descarta la sesión si pasaron los 15 minutos
   const session = getStoredSession()
+  if (!session?.token && api.defaults.headers.common.Authorization && !config.skipAuthRedirect) {
+    expireSession()
+    return Promise.reject(new axios.Cancel('session-expired'))
+  }
+
   config.headers = config.headers || {}
 
   if (session?.token) config.headers.Authorization = `Bearer ${session.token}`
