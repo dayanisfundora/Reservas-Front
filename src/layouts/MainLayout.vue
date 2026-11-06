@@ -12,7 +12,7 @@
                         dense
                         icon="menu"
                     >
-                        <q-tooltip>{{ miniState ? "Expandir Menú" : "Colapsar Menú" }}</q-tooltip>
+                        <q-tooltip>{{ menuToggleLabel }}</q-tooltip>
                     </q-btn>
                     <div class="brand-block">
                         <div class="brand-mark" aria-hidden="true" />
@@ -122,22 +122,26 @@
         <q-drawer
             v-model="drawer"
             show-if-above
-            :mini="miniState"
+            :mini="effectiveMini"
             :mini-width="64"
-                        :width="drawerWidth"
-                        :breakpoint="1024"
+            :width="drawerWidth"
+            :breakpoint="DRAWER_BREAKPOINT"
             class="app-drawer"
             bordered
         >
             <div class="drawer-body column no-wrap full-height">
                 <div class="drawer-bg" aria-hidden="true" />
-                <div class="drawer-scroll col" :class="miniState ? 'q-pa-xs' : 'q-pa-sm'">
-                    <div class="drawer-top" v-if="!miniState">
+                <div class="drawer-scroll col" :class="effectiveMini ? 'q-pa-xs' : 'q-pa-sm'">
+                    <div class="drawer-top" v-if="!effectiveMini">
                         <div class="drawer-label">Navegación</div>
                     </div>
                     <q-list padding class="menu-list">
-                        <EssentialLink :mini="miniState" />
+                        <EssentialLink :mini="effectiveMini" />
                     </q-list>
+                </div>
+                <div v-if="!effectiveMini" class="drawer-credit">
+                    <span>Desarrollado por <strong>DoubLe Team</strong></span>
+                    <span>© {{ currentYear }} Todos los derechos reservados</span>
                 </div>
             </div>
         </q-drawer>
@@ -172,6 +176,7 @@ const drawer = ref(true)
 const miniState = ref(true)
 const router = useRouter()
 const route = useRoute()
+const currentYear = new Date().getFullYear()
 const authStore = useAuthStore()
 const empresaStore = useEmpresaStore()
 const proyectoStore = useProyectoStore()
@@ -181,8 +186,23 @@ const { casaFilterOptions } = useProyectoContext()
 
 const canSeeNotificaciones = computed(() => authStore.hasPermission('ver_reservas'))
 
-/** Más estrecho en laptops para ganar área de contenido */
-const drawerWidth = computed(() => ($q.screen.width < 1440 ? 252 : 288))
+/** Por debajo de este ancho el menú se oculta y se abre superpuesto */
+const DRAWER_BREAKPOINT = 1024
+const isMobile = computed(() => $q.screen.width < DRAWER_BREAKPOINT)
+
+/** Más estrecho en laptops para ganar área de contenido; en móvil, como máximo el 80% de la pantalla */
+const drawerWidth = computed(() => {
+    if (isMobile.value) return Math.min(260, Math.round($q.screen.width * 0.8))
+    return $q.screen.width < 1440 ? 252 : 288
+})
+
+/** El modo reducido solo aplica en escritorio */
+const effectiveMini = computed(() => miniState.value && !isMobile.value)
+
+const menuToggleLabel = computed(() => {
+    if (isMobile.value) return drawer.value ? 'Cerrar menú' : 'Abrir menú'
+    return miniState.value ? 'Expandir menú' : 'Colapsar menú'
+})
 
 const empresaOptions = computed(() => {
     return empresaStore.empresas.map((empresa) => ({
@@ -196,8 +216,19 @@ const wantsCompactDrawer = computed(() => route.meta?.compactDrawer === true)
 const miniBeforeCompact = ref(null)
 
 function toggleMini() {
+    if (isMobile.value) {
+        drawer.value = !drawer.value
+        return
+    }
     miniState.value = !miniState.value
 }
+
+watch(
+    () => route.fullPath,
+    () => {
+        if (isMobile.value) drawer.value = false
+    }
+)
 
 watch(
     wantsCompactDrawer,
@@ -274,6 +305,33 @@ async function handleLogout() {
 .app-layout {
     background: var(--app-page-bg);
     background-attachment: fixed;
+}
+
+.drawer-credit {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 10px 14px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--app-shell-ink);
+    opacity: 0.72;
+    font-size: 10.5px;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+}
+
+.drawer-credit strong {
+    font-weight: 700;
+    color: var(--app-shell-accent);
+}
+
+@media print {
+    .drawer-credit {
+        display: none !important;
+    }
 }
 
 .app-header {
@@ -606,6 +664,67 @@ async function handleLogout() {
 
     .brand-mark {
         height: 24px;
+    }
+}
+
+/* Tablets y móviles */
+@media (max-width: 768px) {
+    .app-header :deep(.q-toolbar),
+    .app-toolbar {
+        gap: 4px;
+        padding: 0 8px;
+    }
+
+    .menu-toggle {
+        margin-right: 4px;
+    }
+
+    .header-actions {
+        gap: 6px;
+    }
+
+    .header-actions > * {
+        margin-left: 0 !important;
+    }
+
+    .header-select {
+        width: 110px;
+        min-width: 90px;
+    }
+
+    .header-select--casa {
+        width: 150px;
+        min-width: 120px;
+        max-width: 160px;
+        flex-shrink: 1;
+    }
+
+    .page-container {
+        padding: 10px 8px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-block {
+        display: none;
+    }
+
+    .header-select {
+        width: 92px;
+        min-width: 80px;
+    }
+
+    .header-select--casa {
+        width: 118px;
+        min-width: 96px;
+    }
+
+    .header-select :deep(.q-field__label) {
+        font-size: 11px;
+    }
+
+    .user-chip {
+        padding: 2px;
     }
 }
 </style>

@@ -31,9 +31,9 @@
                     </div>
 
                     <p class="eyebrow">Gestión de alojamiento</p>
-                    <h1 class="login-title">Controla la ocupación de tus casas y habitaciones en un solo lugar.</h1>
+                    <h1 class="login-title">Controla la ocupación de tus casas y habitaciones.</h1>
                     <p class="login-text">
-                        Inicia sesión para registrar reservas, consultar la disponibilidad y planificar tus estancias.
+                        Inicia sesión para registrar reservas, consultar la disponibilidad y planificar las estancias.
                     </p>
                 </div>
 
@@ -59,7 +59,7 @@
                         <q-icon name="lock_open" size="20px" />
                     </div>
                     <div class="login-card-eyebrow">Acceso seguro</div>
-                    <div class="login-card-title">Bienvenido de nuevo</div>
+                    <div class="login-card-title">Bienvenido</div>
                     <div class="login-card-subtitle">Ingresa tus credenciales para continuar.</div>
                 </q-card-section>
 
@@ -129,7 +129,7 @@
             </q-card>
         </div>
 
-        <q-dialog v-model="forgotOpen">
+        <q-dialog v-model="forgotOpen" persistent>
             <q-card class="forgot-card">
                 <q-card-section>
                     <div class="login-card-eyebrow">Recuperar acceso</div>
@@ -169,7 +169,7 @@
             </q-card>
         </q-dialog>
 
-        <div class="login-footer">© 2026 DoubLe Team | Todos los derechos reservados.</div>
+        <div class="login-footer">Sistema desarrollado por <strong>DoubLe Team</strong> · © 2026 Todos los derechos reservados.</div>
     </div>
 </template>
 

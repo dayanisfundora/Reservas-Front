@@ -49,7 +49,7 @@
                 <q-btn flat no-caps color="primary" icon="logout" label="Cerrar sesión" @click="handleLogout" />
             </q-card-section>
         </q-card>
-        <div class="select-footer">© 2026 DoubLe Team | Todos los derechos reservados.</div>
+        <div class="select-footer">Sistema desarrollado por <strong>DoubLe Team</strong> · © 2026 Todos los derechos reservados.</div>
     </div>
 </template>
 

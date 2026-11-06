@@ -1,5 +1,5 @@
 <template>
-  <q-dialog v-model="abrirDialog">
+  <q-dialog v-model="abrirDialog" persistent>
     <q-card class="app-dialog-card">
       <q-card-section class="app-dialog-header">
           <div class="row items-center no-wrap q-gutter-md">

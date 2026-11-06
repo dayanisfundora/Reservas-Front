@@ -6,15 +6,16 @@ export const essentialListUrl = [
         permission: ['ver_reservas'],
     },
     {
-        title: 'RESERVAS',
-        children: [
-            {
-                title: 'Listado de reservas',
-                icon: 'event_available',
-                link: 'Reservas',
-                permission: ['ver_reservas'],
-            },
-        ],
+        title: 'Listado de reservas',
+        icon: 'event_available',
+        link: 'Reservas',
+        permission: ['ver_reservas'],
+    },
+    {
+        title: 'Reportes',
+        icon: 'assessment',
+        link: 'ReportesReservas',
+        permission: ['ver_reservas'],
     },
     {
         title: 'CONFIGURACIÓN',
@@ -41,6 +42,12 @@ export const essentialListUrl = [
                 icon: 'manage_accounts',
                 link: 'GestionUsuarios',
                 permission: ['ver_usuarios'],
+            },
+            {
+                title: 'Respaldo de base de datos',
+                icon: 'mdi-database-export',
+                link: 'BackupBd',
+                permission: ['respaldar_bd'],
             },
         ],
     },

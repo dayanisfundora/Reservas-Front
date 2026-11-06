@@ -67,7 +67,7 @@
                 </q-form>
             </q-card-section>
         </q-card>
-        <div class="reset-footer">© 2026 DoubLe Team | Todos los derechos reservados.</div>
+        <div class="reset-footer">Sistema desarrollado por <strong>DoubLe Team</strong> · © 2026 Todos los derechos reservados.</div>
     </div>
 </template>
 
