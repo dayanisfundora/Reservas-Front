@@ -19,7 +19,7 @@
                 <q-btn flat color="primary" label="Cerrar sesión" @click="handleLogout" />
             </div>
         </q-card>
-        <div class="auth-footer">© 2026 DoubLe Team | Todos los derechos reservados.</div>
+        <div class="auth-footer">Sistema desarrollado por <strong>DoubLe Team</strong> · © 2026 Todos los derechos reservados.</div>
     </div>
 </template>
 

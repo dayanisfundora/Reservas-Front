@@ -56,7 +56,7 @@
                     <div class="sidebar-section-label">Atajos y estadísticas</div>
                     <div class="workload-card">
                         <div class="row items-center justify-between">
-                            <span class="text-weight-medium">Carga de trabajo</span>
+                            <span class="text-weight-medium">Porciento de ocupación</span>
                             <span class="text-caption text-grey-7">{{ occupancyPct }}%</span>
                         </div>
                         <q-linear-progress
@@ -91,7 +91,7 @@
                         outline
                         color="teal"
                         class="full-width q-mt-md"
-                        label="Métricas del mes"
+                        label="Reservas mes"
                         icon="analytics"
                         @click="metricsOpen = true"
                     />
@@ -402,6 +402,14 @@
                                             </span>
                                         </span>
                                     </button>
+                                    <button
+                                        v-if="canManage"
+                                        type="button"
+                                        class="cell-add-btn"
+                                        @click.stop="goCreate(room.id, day)"
+                                    >
+                                        <q-icon name="add" size="14px" /> Agregar
+                                    </button>
                                 </template>
                                 <div v-else-if="canManage" class="book-empty">
                                     <q-icon name="add" size="14px" />
@@ -478,6 +486,14 @@
                                             <span class="plan-tag">{{ room.tipo === 'privada' ? 'PRIVADA' : 'COMPARTIDA' }}</span>
                                         </div>
                                     </div>
+                                    <button
+                                        v-if="canManage"
+                                        type="button"
+                                        class="cell-add-btn"
+                                        @click.stop="goCreate(room.id, day)"
+                                    >
+                                        <q-icon name="add" size="14px" /> Agregar
+                                    </button>
                                 </template>
                                 <div v-else-if="canManage" class="empty-slot">
                                     <q-icon name="add" size="16px" />
@@ -491,7 +507,7 @@
         </div>
 
         <!-- Day / reserva detail -->
-        <q-dialog v-model="detailOpen" @hide="resetDetailState">
+        <q-dialog v-model="detailOpen" persistent @hide="resetDetailState">
             <q-card class="detail-card rv-card no-accent-bar">
                 <!-- Confirmar cancelación -->
                 <template v-if="confirmCancel && activeReserva">
@@ -754,10 +770,10 @@
         </q-dialog>
 
         <!-- Metrics -->
-        <q-dialog v-model="metricsOpen">
+        <q-dialog v-model="metricsOpen" persistent>
             <q-card class="metrics-card no-accent-bar">
                 <q-card-section class="row items-center">
-                    <div class="text-h6 text-teal-10">Métricas del mes</div>
+                    <div class="text-h6 text-teal-10">Reservas mes</div>
                     <q-space />
                     <q-btn flat round dense icon="close" v-close-popup />
                 </q-card-section>
@@ -989,8 +1005,8 @@
                                         :class="disponibilidad.disponible ? 'bg-positive text-white' : 'bg-negative text-white'"
                                     >
                                         <template v-if="disponibilidad.disponible">
-                                            Disponible · Cap. {{ disponibilidad.capacidad }} ·
-                                            Ocup. {{ disponibilidad.ocupado }} · Rest. {{ disponibilidad.restante }}
+                                            Disponible · Capacidad {{ disponibilidad.capacidad }} ·
+                                            Ocupado {{ disponibilidad.ocupado }} · Restante {{ disponibilidad.restante }}
                                         </template>
                                         <template v-else>
                                             {{ disponibilidad.mensaje || 'Sin disponibilidad.' }}
@@ -1058,7 +1074,7 @@ const loading = ref(false)
 const rooms = ref([])
 const reservas = ref([])
 const selectedDate = ref(formatLocalDate(new Date()))
-const viewMode = ref('mensual')
+const viewMode = ref('libro')
 const search = ref('')
 const selectedHabitacionIds = ref([])
 const detailOpen = ref(false)
@@ -1281,14 +1297,19 @@ const stats = computed(() => {
     const pendientes = idsPendientes.size
 
     let parciales = 0
-    let occupiedSlots = 0
-    let totalSlots = 0
-
     for (const room of visibleRooms.value) {
         for (const cell of room.dias || []) {
-            totalSlots += 1
             if (cell.estado === 'parcial') parciales += 1
-            if (cell.estado !== 'libre') occupiedSlots += 1
+        }
+    }
+
+    // Igual que el dashboard de Impuestos: noches-habitación confirmadas ÷ (habitaciones de la casa × días del mes)
+    let occupiedSlots = 0
+    let totalSlots = 0
+    for (const room of rooms.value) {
+        for (const cell of room.dias || []) {
+            totalSlots += 1
+            if ((cell.reservas || []).some((r) => r.estado === 'confirmada')) occupiedSlots += 1
         }
     }
 
@@ -1297,10 +1318,10 @@ const stats = computed(() => {
 
 const occupancyPct = computed(() => {
     if (!stats.value.totalSlots) return 0
-    return Math.round((stats.value.occupiedSlots / stats.value.totalSlots) * 100)
+    return Math.min(100, Math.round((stats.value.occupiedSlots / stats.value.totalSlots) * 1000) / 10)
 })
 
-const occupancyLabel = computed(() => `${occupancyPct.value}% de noches-habitación ocupadas`)
+const occupancyLabel = computed(() => `${occupancyPct.value}% de noches-habitación ocupadas (confirmadas)`)
 
 const metricCards = computed(() => [
     { label: 'Confirmadas', value: stats.value.confirmadas, icon: 'event_available', color: '#0f766e', bg: '#ecfdf5', iconBg: '#ccfbf1' },
@@ -2302,6 +2323,7 @@ onMounted(async () => {
 }
 
 .calendar-export-root.is-exporting .day-add-btn,
+.calendar-export-root.is-exporting .cell-add-btn,
 .calendar-export-root.is-exporting .empty-slot,
 .calendar-export-root.is-exporting .book-empty {
     display: none !important;
@@ -2798,6 +2820,50 @@ onMounted(async () => {
 
 .book-cell:hover .book-empty {
     opacity: 1;
+}
+
+.cell-add-btn {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    width: 100%;
+    min-height: 22px;
+    padding: 2px 6px;
+    border-radius: 7px;
+    border: 1px dashed color-mix(in srgb, var(--plan-brand) 45%, var(--plan-border));
+    background: color-mix(in srgb, var(--plan-brand) 6%, var(--plan-surface));
+    color: var(--plan-brand);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.cell-add-btn:hover {
+    background: color-mix(in srgb, var(--plan-brand) 14%, var(--plan-surface));
+    border-style: solid;
+    border-color: var(--plan-brand);
+}
+
+.cell-add-btn:focus-visible {
+    outline: 2px solid var(--plan-brand);
+    outline-offset: 1px;
+}
+
+:global(body.body--dark) .cell-add-btn,
+:global(body.app-dark) .cell-add-btn {
+    background: color-mix(in srgb, var(--plan-brand) 12%, transparent);
+    border-color: color-mix(in srgb, var(--plan-brand) 40%, transparent);
+    color: color-mix(in srgb, var(--plan-brand) 85%, #fff);
+}
+
+:global(body.body--dark) .cell-add-btn:hover,
+:global(body.app-dark) .cell-add-btn:hover {
+    background: color-mix(in srgb, var(--plan-brand) 24%, transparent);
+    border-color: var(--plan-brand);
 }
 
 .planning-grid {
@@ -3644,10 +3710,68 @@ svg.rv-tile-bed {
 
     .planning-sidebar {
         position: static;
+        order: 2;
     }
 
     .search-input {
         min-width: 160px;
+    }
+}
+
+@media (max-width: 700px) {
+    .planning-page {
+        padding: 6px 2px 16px;
+    }
+
+    .planning-main {
+        padding: 10px;
+    }
+
+    .planning-toolbar {
+        gap: 8px;
+    }
+
+    .toolbar-left {
+        width: 100%;
+    }
+
+    .month-title {
+        flex: 1;
+        min-width: 0;
+        font-size: 1.1rem;
+    }
+
+    .view-switch {
+        width: 100%;
+    }
+
+    .view-switch .q-btn {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .toolbar-right {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .search-input {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .toolbar-right .q-btn {
+        flex: 1;
+    }
+
+    .legend-row {
+        gap: 8px;
+        margin: 10px 0 8px;
+    }
+
+    .calendar-panel,
+    .book-grid-wrap {
+        max-height: calc(100vh - 160px);
     }
 }
 </style>

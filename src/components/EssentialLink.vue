@@ -319,57 +319,27 @@ function filterLinks(links) {
 const visibleLinks = computed(() => filterLinks(essentialListUrl))
 
 /**
- * Group consecutive standalone links into section blocks so they
- * match the visual style of titled menu sections.
+ * Standalone links render as direct menu items; links with children
+ * render as collapsible sections.
  *
  * @param {Array} links
  * @returns {Array}
  */
 function groupMenuLinks(links) {
-    const groups = []
-    let pendingStandalone = []
-    let standaloneGroupCount = 0
-
-    function flushStandalone() {
-        if (!pendingStandalone.length) {
-            return
-        }
-
-        standaloneGroupCount += 1
-
-        if (standaloneGroupCount > 1 && pendingStandalone.length === 1) {
-            groups.push({
-                type: 'link',
-                ...pendingStandalone[0],
-            })
-        } else {
-            groups.push({
-                type: 'standalone-group',
-                title: standaloneGroupCount === 1 ? 'GENERAL' : 'INFORMES',
-                links: [...pendingStandalone],
-            })
-        }
-
-        pendingStandalone = []
-    }
-
-    for (const link of links) {
+    return links.map((link) => {
         if (link.children?.length) {
-            flushStandalone()
-            groups.push({
+            return {
                 type: 'section',
                 title: link.title,
                 children: link.children,
-            })
-            continue
+            }
         }
 
-        pendingStandalone.push(link)
-    }
-
-    flushStandalone()
-
-    return groups
+        return {
+            type: 'link',
+            ...link,
+        }
+    })
 }
 
 const groupedLinks = computed(() => groupMenuLinks(visibleLinks.value))

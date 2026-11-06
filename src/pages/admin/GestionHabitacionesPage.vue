@@ -74,7 +74,7 @@
             </template>
         </q-table>
 
-        <q-dialog v-model="dialogOpen">
+        <q-dialog v-model="dialogOpen" persistent>
             <q-card style="min-width: 440px">
                 <q-card-section>
                     <div class="text-h6">{{ editingId ? 'Editar habitación' : 'Nueva habitación' }}</div>

@@ -318,8 +318,8 @@
                                         :class="disponibilidad.disponible ? 'bg-positive text-white' : 'bg-negative text-white'"
                                     >
                                         <template v-if="disponibilidad.disponible">
-                                            Disponible · Cap. {{ disponibilidad.capacidad }} ·
-                                            Ocup. {{ disponibilidad.ocupado }} · Rest. {{ disponibilidad.restante }}
+                                            Disponible · Capacidad {{ disponibilidad.capacidad }} ·
+                                            Ocupado {{ disponibilidad.ocupado }} · Restante {{ disponibilidad.restante }}
                                         </template>
                                         <template v-else>
                                             {{ disponibilidad.mensaje || 'Sin disponibilidad.' }}
