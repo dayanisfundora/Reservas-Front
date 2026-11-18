@@ -319,7 +319,7 @@ async function saveProfile() {
     font-size: 1.6rem;
     font-weight: 700;
     color: #fff;
-    background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
-    box-shadow: 0 10px 24px rgba(15, 118, 110, 0.25);
+    background: linear-gradient(135deg, #7a1f2b 0%, #8e2a36 100%);
+    box-shadow: 0 10px 24px rgba(var(--theme-wine-rgb), 0.25);
 }
 </style>

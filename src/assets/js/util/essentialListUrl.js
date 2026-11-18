@@ -44,6 +44,12 @@ export const essentialListUrl = [
                 permission: ['ver_usuarios'],
             },
             {
+                title: 'Identidad del negocio',
+                icon: 'palette',
+                link: 'Identidad',
+                permission: ['gestionar_identidad'],
+            },
+            {
                 title: 'Respaldo de base de datos',
                 icon: 'mdi-database-export',
                 link: 'BackupBd',

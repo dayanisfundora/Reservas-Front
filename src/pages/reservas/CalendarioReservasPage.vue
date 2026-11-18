@@ -1,8 +1,8 @@
 <template>
     <q-page class="planning-page">
-        <div v-if="!casaActivaId" class="q-pa-md">
+        <div v-if="needsCasaBanner" class="q-pa-md">
             <q-banner class="bg-warning text-dark" rounded>
-                Seleccione una casa activa en el encabezado para ver el calendario.
+                Seleccione una casa en el filtro del calendario para la vista mensual.
             </q-banner>
         </div>
 
@@ -10,10 +10,16 @@
             <!-- Sidebar -->
             <aside class="planning-sidebar">
                 <div class="sidebar-brand">
-                    <div class="sidebar-brand-mark">R</div>
+                    <img
+                        v-if="brandStore.logoUrl"
+                        class="sidebar-brand-mark sidebar-brand-mark--logo"
+                        :src="brandStore.logoUrl"
+                        :alt="brandStore.name"
+                    />
+                    <div v-else class="sidebar-brand-mark">{{ brandInitial }}</div>
                     <div>
-                        <div class="sidebar-brand-title">Reservas</div>
-                        <div class="sidebar-brand-sub">Planning workspace</div>
+                        <div class="sidebar-brand-title">{{ brandStore.name }}</div>
+                        <div class="sidebar-brand-sub">{{ brandStore.tagline || 'Planning workspace' }}</div>
                     </div>
                 </div>
 
@@ -33,21 +39,24 @@
                 <div class="sidebar-block">
                     <div class="sidebar-section-label">Habitaciones</div>
                     <div class="room-filters">
-                        <q-checkbox
-                            v-for="room in rooms"
-                            :key="room.id"
-                            v-model="selectedHabitacionIds"
-                            :val="room.id"
-                            :label="room.nombre"
-                            dense
-                            keep-color
-                            color="primary"
-                            class="room-check"
-                            :style="{ '--q-primary': roomColor(room) }"
-                        />
+                        <template v-for="grupo in roomsGrouped" :key="`filtro-${grupo.casa_id}`">
+                            <div v-if="showCasaSections" class="room-casa-label">{{ grupo.casa_nombre }}</div>
+                            <q-checkbox
+                                v-for="room in grupo.rooms"
+                                :key="room.id"
+                                v-model="selectedHabitacionIds"
+                                :val="room.id"
+                                :label="room.nombre"
+                                dense
+                                keep-color
+                                color="primary"
+                                class="room-check"
+                                :style="{ '--q-primary': roomColor(room) }"
+                            />
+                        </template>
                     </div>
                     <div class="row q-gutter-xs q-mt-sm">
-                        <q-btn flat dense size="sm" color="teal" label="Todas" @click="selectAllRooms" />
+                        <q-btn flat dense size="sm" color="primary" label="Todas" @click="selectAllRooms" />
                         <q-btn flat dense size="sm" color="grey-7" label="Ninguna" @click="selectedHabitacionIds = []" />
                     </div>
                 </div>
@@ -61,8 +70,8 @@
                         </div>
                         <q-linear-progress
                             :value="occupancyPct / 100"
-                            color="teal"
-                            track-color="teal-1"
+                            color="primary"
+                            track-color="grey-3"
                             rounded
                             size="10px"
                             class="q-mt-sm"
@@ -89,8 +98,8 @@
 
                     <q-btn
                         outline
-                        color="teal"
-                        class="full-width q-mt-md"
+                        no-caps
+                        class="full-width q-mt-md plan-outline-btn"
                         label="Reservas mes"
                         icon="analytics"
                         @click="metricsOpen = true"
@@ -110,10 +119,24 @@
             <section class="planning-main">
                 <header class="planning-toolbar">
                     <div class="toolbar-left">
-                        <div class="month-title">{{ monthLabel }}</div>
-                        <q-btn flat round dense icon="chevron_left" @click="shiftPeriod(-1)" />
-                        <q-btn flat round dense icon="chevron_right" @click="shiftPeriod(1)" />
-                        <q-btn outline dense color="teal" label="Hoy" class="hoy-btn" @click="goToday" />
+                        <div class="month-title">
+                            {{ monthParts.month }} <em>{{ monthParts.year }}</em>
+                        </div>
+                        <q-btn flat round dense icon="chevron_left" class="nav-arrow-btn" @click="shiftPeriod(-1)" />
+                        <q-btn flat round dense icon="chevron_right" class="nav-arrow-btn" @click="shiftPeriod(1)" />
+                        <q-btn outline dense no-caps label="Hoy" class="hoy-btn plan-outline-btn" @click="goToday" />
+                        <q-select
+                            v-model="filtroCasaId"
+                            :options="casaFilterOptions"
+                            emit-value
+                            map-options
+                            dense
+                            outlined
+                            options-dense
+                            label="Casa"
+                            class="casa-filter-select"
+                            hide-bottom-space
+                        />
                     </div>
 
                     <div class="view-switch">
@@ -122,9 +145,9 @@
                             :key="opt.value"
                             dense
                             unelevated
+                            no-caps
                             :outline="viewMode !== opt.value"
-                            :color="viewMode === opt.value ? 'teal' : 'grey-6'"
-                            :class="{ 'view-active': viewMode === opt.value }"
+                            :class="viewMode === opt.value ? 'view-active' : 'plan-outline-btn'"
                             :label="opt.label"
                             @click="viewMode = opt.value"
                         />
@@ -146,9 +169,10 @@
                         <q-btn
                             outline
                             dense
-                            color="teal"
+                            no-caps
                             icon="picture_as_pdf"
                             label="PDF"
+                            class="plan-outline-btn"
                             :loading="downloadingPdf"
                             :disable="loading || downloadingPdf || printingPdf"
                             @click="downloadCalendarPdf"
@@ -158,9 +182,10 @@
                         <q-btn
                             outline
                             dense
-                            color="teal"
+                            no-caps
                             icon="print"
                             label="Imprimir"
+                            class="plan-outline-btn"
                             :loading="printingPdf"
                             :disable="loading || downloadingPdf || printingPdf"
                             @click="printCalendarPdf"
@@ -170,7 +195,7 @@
                         <q-btn
                             v-if="canManage"
                             unelevated
-                            color="teal"
+                            no-caps
                             icon="add"
                             label="Nueva reserva"
                             class="create-btn"
@@ -211,7 +236,7 @@
                 </div>
 
                 <div v-if="loading" class="flex flex-center q-pa-xl">
-                    <q-spinner color="teal" size="42px" />
+                    <q-spinner color="primary" size="42px" />
                 </div>
 
                 <!-- MENSUAL -->
@@ -348,7 +373,11 @@
                             v-for="room in visibleRooms"
                             :key="`bh-${room.id}`"
                             class="book-room-head"
+                            :style="{ '--room-color': roomColor(room) }"
                         >
+                            <div v-if="showCasaSections && room.casa_nombre" class="book-room-casa">
+                                {{ room.casa_nombre }}
+                            </div>
                             <div class="book-room-head-title">
                                 <span class="legend-dot" :style="{ background: roomColor(room) }" />
                                 <span class="book-room-head-name">{{ room.nombre }}</span>
@@ -361,7 +390,7 @@
                         <template v-for="day in bookDays" :key="`bd-${day}`">
                             <div
                                 class="book-day-label"
-                                :class="{ 'is-today': day === todayIso }"
+                                :class="{ 'is-today': day === todayIso, 'is-weekend': isWeekend(day) }"
                             >
                                 <div class="grid-day-wd">{{ weekdayShort(day) }}</div>
                                 <div class="grid-day-num">{{ day.slice(8) }}</div>
@@ -370,6 +399,7 @@
                                 v-for="room in visibleRooms"
                                 :key="`bc-${room.id}-${day}`"
                                 class="book-cell"
+                                :class="{ 'is-today': day === todayIso, 'is-weekend': isWeekend(day) }"
                                 @click="onBookCellClick(room, day)"
                             >
                                 <template v-if="cellReservas(room.id, day).length">
@@ -427,31 +457,41 @@
                             v-for="day in planningDays"
                             :key="`h-${day}`"
                             class="grid-day-head"
-                            :class="{ 'is-today': day === todayIso }"
+                            :class="{ 'is-today': day === todayIso, 'is-weekend': isWeekend(day) }"
                         >
                             <div class="grid-day-wd">{{ weekdayShort(day) }}</div>
                             <div class="grid-day-num">{{ day.slice(8) }}</div>
                         </div>
 
-                        <template v-for="room in visibleRooms" :key="room.id">
-                            <div class="grid-room">
+                        <template v-for="row in planningRows" :key="row.key">
+                            <template v-if="row.type === 'casa'">
+                                <div
+                                    class="grid-casa-head"
+                                    :style="{ gridColumn: `1 / span ${planningDays.length + 1}` }"
+                                >
+                                    {{ row.casa_nombre }}
+                                </div>
+                            </template>
+                            <template v-else>
+                            <div class="grid-room" :style="{ '--room-color': roomColor(row.room) }">
                                 <div class="grid-room-name">
-                                    <span class="legend-dot" :style="{ background: roomColor(room) }" />
-                                    {{ room.nombre }}
+                                    <span class="legend-dot" :style="{ background: roomColor(row.room) }" />
+                                    {{ row.room.nombre }}
                                 </div>
                                 <div class="grid-room-meta">
-                                    {{ room.tipo === 'privada' ? 'Privada' : 'Compartida' }} · {{ room.capacidad }}
+                                    {{ row.room.tipo === 'privada' ? 'Privada' : 'Compartida' }} · {{ row.room.capacidad }}
                                 </div>
                             </div>
                             <div
                                 v-for="day in planningDays"
-                                :key="`${room.id}-${day}`"
+                                :key="`${row.room.id}-${day}`"
                                 class="grid-cell"
-                                @click="onPlanningCellClick(room, day)"
+                                :class="{ 'is-today': day === todayIso, 'is-weekend': isWeekend(day) }"
+                                @click="onPlanningCellClick(row.room, day)"
                             >
-                                <template v-if="cellReservas(room.id, day).length">
+                                <template v-if="cellReservas(row.room.id, day).length">
                                     <div
-                                        v-for="ev in cellReservas(room.id, day)"
+                                        v-for="ev in cellReservas(row.room.id, day)"
                                         :key="ev.id"
                                         class="plan-card"
                                         :class="{ 'is-pendiente': ev.estado === 'pendiente' }"
@@ -483,14 +523,14 @@
                                                     <q-tooltip>{{ ev.taxi_salida ? 'Taxi salida: sí' : 'Sin taxi de salida' }}</q-tooltip>
                                                 </span>
                                             </span>
-                                            <span class="plan-tag">{{ room.tipo === 'privada' ? 'PRIVADA' : 'COMPARTIDA' }}</span>
+                                            <span class="plan-tag">{{ row.room.tipo === 'privada' ? 'PRIVADA' : 'COMPARTIDA' }}</span>
                                         </div>
                                     </div>
                                     <button
                                         v-if="canManage"
                                         type="button"
                                         class="cell-add-btn"
-                                        @click.stop="goCreate(room.id, day)"
+                                        @click.stop="goCreate(row.room.id, day)"
                                     >
                                         <q-icon name="add" size="14px" /> Agregar
                                     </button>
@@ -499,6 +539,7 @@
                                     <q-icon name="add" size="16px" />
                                 </div>
                             </div>
+                            </template>
                         </template>
                     </div>
                 </div>
@@ -773,19 +814,19 @@
         <q-dialog v-model="metricsOpen" persistent>
             <q-card class="metrics-card no-accent-bar">
                 <q-card-section class="row items-center">
-                    <div class="text-h6 text-teal-10">Reservas mes</div>
+                    <div class="text-h6 text-primary">Reservas mes</div>
                     <q-space />
                     <q-btn flat round dense icon="close" v-close-popup />
                 </q-card-section>
                 <q-card-section>
                     <div class="row q-col-gutter-md">
                         <div v-for="card in metricCards" :key="card.label" class="col-6 col-sm-3">
-                            <div class="metric-tile" :style="{ background: card.bg }">
-                                <div class="metric-icon" :style="{ background: card.iconBg, color: card.color }">
+                            <div class="metric-tile" :class="`metric-tile--${card.tone}`">
+                                <div class="metric-icon">
                                     <q-icon :name="card.icon" />
                                 </div>
                                 <div class="metric-label">{{ card.label }}</div>
-                                <div class="metric-value" :style="{ color: card.color }">{{ card.value }}</div>
+                                <div class="metric-value">{{ card.value }}</div>
                             </div>
                         </div>
                     </div>
@@ -796,7 +837,7 @@
                             <span>{{ bar.label }}</span>
                             <span>{{ bar.value }}</span>
                         </div>
-                        <q-linear-progress :value="bar.ratio" color="teal" track-color="teal-1" rounded size="12px" class="q-mt-xs" />
+                        <q-linear-progress :value="bar.ratio" color="primary" track-color="grey-8" rounded size="12px" class="q-mt-xs metrics-bar" />
                     </div>
                 </q-card-section>
             </q-card>
@@ -811,210 +852,255 @@
                     <q-btn flat round dense icon="close" v-close-popup />
                 </q-card-section>
 
-                <q-card-section class="q-pt-sm q-pb-none">
+                <q-card-section class="q-pt-md q-pb-none">
                     <div class="reserva-layout">
                         <section class="reserva-pane">
                             <div class="reserva-pane-title">Estancia</div>
-                            <div class="row q-col-gutter-sm">
-                                <div class="col-12">
-                                    <q-select
-                                        v-model="createForm.habitacion_id"
-                                        :options="habitacionOptions"
-                                        emit-value
-                                        map-options
-                                        outlined
-                                        dense
-                                        label="Habitación *"
-                                        hide-bottom-space
-                                        @update:model-value="onCreateHabitacionChange"
-                                    />
-                                </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model="createForm.fecha_entrada"
-                                        outlined
-                                        dense
-                                        label="Entrada *"
-                                        mask="####-##-##"
-                                        hide-bottom-space
-                                        @update:model-value="onCreateStayChange"
-                                    >
-                                        <template #append>
-                                            <q-icon name="event" class="cursor-pointer">
-                                                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                                                    <q-date
-                                                        v-model="createForm.fecha_entrada"
-                                                        mask="YYYY-MM-DD"
-                                                        @update:model-value="onCreateStayChange"
-                                                    >
-                                                        <div class="row items-center justify-end">
-                                                            <q-btn v-close-popup label="Cerrar" color="teal" flat />
-                                                        </div>
-                                                    </q-date>
-                                                </q-popup-proxy>
-                                            </q-icon>
-                                        </template>
-                                    </q-input>
-                                </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model.number="createForm.cantidad_noches"
-                                        outlined
-                                        dense
-                                        type="number"
-                                        min="1"
-                                        label="Noches *"
-                                        hide-bottom-space
-                                        @update:model-value="onCreateStayChange"
-                                    />
-                                </div>
-                                <div class="col-4">
-                                    <q-input
-                                        :model-value="fechaSalidaCalculada"
-                                        outlined
-                                        dense
-                                        label="Salida"
-                                        readonly
-                                        hide-bottom-space
-                                    />
-                                </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model.number="createForm.cantidad_personas"
-                                        outlined
-                                        dense
-                                        type="number"
-                                        min="1"
-                                        label="Personas *"
-                                        hide-bottom-space
-                                        @update:model-value="onCreatePersonasChange"
-                                    />
-                                </div>
-                                <div class="col-8 flex items-center">
-                                    <div class="text-caption text-grey-7">
-                                        Camas * · {{ plazasCamasCreate }} plazas / {{ createForm.cantidad_personas || 0 }} pers.
+
+                            <div class="reserva-block">
+                                <q-select
+                                    v-model="createForm.habitacion_id"
+                                    :options="habitacionOptions"
+                                    emit-value
+                                    map-options
+                                    outlined
+                                    dense
+                                    label="Habitación *"
+                                    hide-bottom-space
+                                    @update:model-value="onCreateHabitacionChange"
+                                />
+                            </div>
+
+                            <div class="reserva-block">
+                                <div class="reserva-block-label">Fechas</div>
+                                <div class="row q-col-gutter-md">
+                                    <div class="col-12 col-sm-5">
+                                        <q-input
+                                            v-model="createForm.fecha_entrada"
+                                            outlined
+                                            dense
+                                            label="Entrada *"
+                                            mask="####-##-##"
+                                            hide-bottom-space
+                                            @update:model-value="onCreateStayChange"
+                                        >
+                                            <template #append>
+                                                <q-icon name="event" class="cursor-pointer">
+                                                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                                                        <q-date
+                                                            v-model="createForm.fecha_entrada"
+                                                            mask="YYYY-MM-DD"
+                                                            @update:model-value="onCreateStayChange"
+                                                        >
+                                                            <div class="row items-center justify-end">
+                                                                <q-btn v-close-popup label="Cerrar" color="primary" flat />
+                                                            </div>
+                                                        </q-date>
+                                                    </q-popup-proxy>
+                                                </q-icon>
+                                            </template>
+                                        </q-input>
+                                    </div>
+                                    <div class="col-5 col-sm-3">
+                                        <q-input
+                                            v-model.number="createForm.cantidad_noches"
+                                            outlined
+                                            dense
+                                            type="number"
+                                            min="1"
+                                            label="Noches *"
+                                            hide-bottom-space
+                                            @update:model-value="onCreateStayChange"
+                                        />
+                                    </div>
+                                    <div class="col-7 col-sm-4">
+                                        <div class="reserva-salida">
+                                            <div class="reserva-salida-label">Salida</div>
+                                            <div class="reserva-salida-value">{{ fechaSalidaCalculada || '—' }}</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model.number="createForm.camas.matrimonial"
-                                        outlined
-                                        dense
-                                        type="number"
-                                        min="0"
-                                        label="Matrimonial"
-                                        hide-bottom-space
-                                    />
+                            </div>
+
+                            <div class="reserva-block">
+                                <div class="reserva-block-label">Ocupación</div>
+                                <div class="row q-col-gutter-md items-end">
+                                    <div class="col-5 col-sm-4">
+                                        <q-input
+                                            v-model.number="createForm.cantidad_personas"
+                                            outlined
+                                            dense
+                                            type="number"
+                                            min="1"
+                                            label="Personas *"
+                                            hide-bottom-space
+                                            @update:model-value="onCreatePersonasChange"
+                                        />
+                                    </div>
+                                    <div class="col-7 col-sm-8">
+                                        <div class="reserva-camas-meta">
+                                            Camas * · <strong>{{ plazasCamasCreate }}</strong> plazas /
+                                            <strong>{{ createForm.cantidad_personas || 0 }}</strong> pers.
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <q-input
+                                            v-model.number="createForm.camas.matrimonial"
+                                            outlined
+                                            dense
+                                            type="number"
+                                            min="0"
+                                            label="Matrimonial"
+                                            hide-bottom-space
+                                        />
+                                    </div>
+                                    <div class="col-4">
+                                        <q-input
+                                            v-model.number="createForm.camas.twin"
+                                            outlined
+                                            dense
+                                            type="number"
+                                            min="0"
+                                            label="Twin"
+                                            hide-bottom-space
+                                        />
+                                    </div>
+                                    <div class="col-4">
+                                        <q-input
+                                            v-model.number="createForm.camas.single"
+                                            outlined
+                                            dense
+                                            type="number"
+                                            min="0"
+                                            label="Single"
+                                            hide-bottom-space
+                                        />
+                                    </div>
                                 </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model.number="createForm.camas.twin"
-                                        outlined
-                                        dense
-                                        type="number"
-                                        min="0"
-                                        label="Twin"
-                                        hide-bottom-space
-                                    />
-                                </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model.number="createForm.camas.single"
-                                        outlined
-                                        dense
-                                        type="number"
-                                        min="0"
-                                        label="Single"
-                                        hide-bottom-space
-                                    />
-                                </div>
-                                <template v-if="selectedCreateHabitacionTipo === 'privada'">
-                                    <div class="col-12 text-caption text-grey-7">Género por persona *</div>
-                                    <div
-                                        v-for="(_, idx) in createForm.generos"
-                                        :key="`cg-${idx}`"
-                                        class="col-6"
-                                    >
+                            </div>
+
+                            <div class="reserva-block reserva-block--last">
+                                <div class="reserva-block-label">Género</div>
+                                <div class="row q-col-gutter-md">
+                                    <template v-if="selectedCreateHabitacionTipo === 'privada'">
+                                        <div
+                                            v-for="(_, idx) in createForm.generos"
+                                            :key="`cg-${idx}`"
+                                            class="col-12 col-sm-6"
+                                        >
+                                            <q-select
+                                                v-model="createForm.generos[idx]"
+                                                :options="generoOptions"
+                                                emit-value
+                                                map-options
+                                                outlined
+                                                dense
+                                                :label="`Persona ${idx + 1} *`"
+                                                hide-bottom-space
+                                                @update:model-value="checkCreateDisponibilidad"
+                                            />
+                                        </div>
+                                    </template>
+                                    <div v-else class="col-12 col-sm-6">
                                         <q-select
-                                            v-model="createForm.generos[idx]"
+                                            v-model="createForm.genero"
                                             :options="generoOptions"
                                             emit-value
                                             map-options
                                             outlined
                                             dense
-                                            :label="`Persona ${idx + 1}`"
+                                            label="Género *"
                                             hide-bottom-space
                                             @update:model-value="checkCreateDisponibilidad"
                                         />
                                     </div>
-                                </template>
-                                <div v-else class="col-6">
-                                    <q-select
-                                        v-model="createForm.genero"
-                                        :options="generoOptions"
-                                        emit-value
-                                        map-options
-                                        outlined
-                                        dense
-                                        label="Género *"
-                                        hide-bottom-space
-                                        @update:model-value="checkCreateDisponibilidad"
-                                    />
                                 </div>
                             </div>
                         </section>
 
                         <section class="reserva-pane">
                             <div class="reserva-pane-title">Cliente y llegada</div>
-                            <div class="row q-col-gutter-sm">
-                                <div class="col-12">
-                                    <q-input v-model="createForm.cliente_nombre" outlined dense label="Nombre del cliente *" hide-bottom-space />
-                                </div>
-                                <div class="col-12">
-                                    <q-input v-model="createForm.agencia" outlined dense label="Agencia" hide-bottom-space />
-                                </div>
-                                <div class="col-5">
-                                    <q-input v-model="createForm.hora_llegada" outlined dense label="Hora llegada" type="time" hide-bottom-space />
-                                </div>
-                                <div class="col-7">
-                                    <q-input v-model="createForm.vuelo" outlined dense label="Vuelo" hide-bottom-space />
-                                </div>
-                                <div class="col-6">
-                                    <q-toggle v-model="createForm.taxi_llegada" dense color="teal" label="Taxi llegada" />
-                                </div>
-                                <div class="col-6">
-                                    <q-toggle v-model="createForm.taxi_salida" dense color="teal" label="Taxi salida" />
-                                </div>
-                                <div class="col-12">
-                                    <q-input
-                                        v-model="createForm.notas"
-                                        outlined
-                                        dense
-                                        type="textarea"
-                                        :rows="2"
-                                        label="Notas"
-                                        hide-bottom-space
-                                    />
-                                </div>
-                                <div class="col-12">
-                                    <q-banner
-                                        v-if="disponibilidad"
-                                        dense
-                                        rounded
-                                        class="reserva-banner"
-                                        :class="disponibilidad.disponible ? 'bg-positive text-white' : 'bg-negative text-white'"
-                                    >
-                                        <template v-if="disponibilidad.disponible">
-                                            Disponible · Capacidad {{ disponibilidad.capacidad }} ·
-                                            Ocupado {{ disponibilidad.ocupado }} · Restante {{ disponibilidad.restante }}
-                                        </template>
-                                        <template v-else>
-                                            {{ disponibilidad.mensaje || 'Sin disponibilidad.' }}
-                                        </template>
-                                    </q-banner>
-                                    <div v-else class="reserva-banner-placeholder text-caption text-grey-6">
-                                        Complete habitación, fechas, personas y género para verificar disponibilidad.
+
+                            <div class="reserva-block">
+                                <div class="row q-col-gutter-md">
+                                    <div class="col-12">
+                                        <q-input v-model="createForm.cliente_nombre" outlined dense label="Nombre del cliente *" hide-bottom-space />
                                     </div>
+                                    <div class="col-12">
+                                        <q-input v-model="createForm.agencia" outlined dense label="Agencia" hide-bottom-space />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="reserva-block">
+                                <div class="reserva-block-label">Llegada</div>
+                                <div class="row q-col-gutter-md">
+                                    <div class="col-12 col-sm-5">
+                                        <q-input
+                                            v-model="createForm.hora_llegada"
+                                            outlined
+                                            dense
+                                            label="Hora llegada (24h)"
+                                            mask="##:##"
+                                            placeholder="HH:mm"
+                                            hide-bottom-space
+                                        >
+                                            <template #append>
+                                                <q-icon name="access_time" class="cursor-pointer">
+                                                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                                                        <q-time v-model="createForm.hora_llegada" format24h mask="HH:mm">
+                                                            <div class="row items-center justify-end">
+                                                                <q-btn v-close-popup label="Cerrar" color="primary" flat dense />
+                                                            </div>
+                                                        </q-time>
+                                                    </q-popup-proxy>
+                                                </q-icon>
+                                            </template>
+                                        </q-input>
+                                    </div>
+                                    <div class="col-12 col-sm-7">
+                                        <q-input v-model="createForm.vuelo" outlined dense label="Vuelo" hide-bottom-space />
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="reserva-toggles">
+                                            <q-toggle v-model="createForm.taxi_llegada" dense color="primary" label="Taxi llegada" />
+                                            <q-toggle v-model="createForm.taxi_salida" dense color="primary" label="Taxi salida" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="reserva-block reserva-block--last">
+                                <q-input
+                                    v-model="createForm.notas"
+                                    outlined
+                                    dense
+                                    type="textarea"
+                                    :rows="3"
+                                    label="Notas"
+                                    hide-bottom-space
+                                    class="reserva-notas"
+                                />
+                            </div>
+
+                            <div class="reserva-block reserva-block--last">
+                                <q-banner
+                                    v-if="disponibilidad"
+                                    dense
+                                    rounded
+                                    class="reserva-banner"
+                                    :class="disponibilidad.disponible ? 'bg-positive text-white' : 'bg-negative text-white'"
+                                >
+                                    <template v-if="disponibilidad.disponible">
+                                        Disponible · Capacidad {{ disponibilidad.capacidad }} ·
+                                        Ocupado {{ disponibilidad.ocupado }} · Restante {{ disponibilidad.restante }}
+                                    </template>
+                                    <template v-else>
+                                        {{ disponibilidad.mensaje || 'Sin disponibilidad.' }}
+                                    </template>
+                                </q-banner>
+                                <div v-else class="reserva-banner-placeholder text-caption text-grey-6">
+                                    Complete habitación, fechas, personas y género para verificar disponibilidad.
                                 </div>
                             </div>
                         </section>
@@ -1024,7 +1110,7 @@
                 <q-card-actions align="right" class="q-px-md q-pb-md">
                     <q-btn flat label="Cerrar" v-close-popup />
                     <q-btn
-                        color="teal"
+                        color="primary"
                         unelevated
                         :label="editingReservaId ? 'Guardar cambios' : 'Crear reserva'"
                         :loading="saving"
@@ -1044,6 +1130,7 @@ import { Notify, date as qdate } from 'quasar'
 import { api } from 'src/boot/axios'
 import { useProyectoStore } from 'src/stores/proyecto-store'
 import { useAuthStore } from 'src/stores/auth-store'
+import { useBrandStore } from 'src/stores/brand-store'
 import {
     emptyCamas,
     formatCamasResumen,
@@ -1067,6 +1154,8 @@ const route = useRoute()
 const router = useRouter()
 const proyectoStore = useProyectoStore()
 const authStore = useAuthStore()
+const brandStore = useBrandStore()
+const brandInitial = computed(() => String(brandStore.name || 'R').trim().charAt(0).toUpperCase() || 'R')
 const canManage = computed(() => authStore.hasPermission('gestionar_reservas'))
 let skipMonthWatch = false
 
@@ -1134,13 +1223,44 @@ const dateLocale = {
 }
 
 const casaActivaId = computed(() => proyectoStore.casaActivaId)
+const filtroCasaId = ref(proyectoStore.casaActivaId ?? null)
 const todayIso = formatLocalDate(new Date())
 const monthKey = computed(() => selectedDate.value.slice(0, 7))
+
+const casaFilterOptions = computed(() => {
+    const casas = proyectoStore.casas.map((c) => ({ label: c.nombre, value: c.id }))
+    if (viewMode.value === 'mensual') return casas
+    return [{ label: 'Todas las casas', value: null }, ...casas]
+})
+
+const showCasaSections = computed(() => (
+    filtroCasaId.value == null && roomsGrouped.value.length > 1
+))
+
+const needsCasaBanner = computed(() => (
+    viewMode.value === 'mensual' && calendarCasaId.value == null
+))
+
+const calendarCasaId = computed(() => {
+    if (viewMode.value === 'mensual') {
+        return filtroCasaId.value ?? casaActivaId.value ?? proyectoStore.casas[0]?.id ?? null
+    }
+    return filtroCasaId.value
+})
 
 const monthLabel = computed(() => {
     const parsed = qdate.extractDate(selectedDate.value, 'YYYY-MM-DD')
     const label = parsed.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
     return label.charAt(0).toUpperCase() + label.slice(1)
+})
+
+const monthParts = computed(() => {
+    const parsed = qdate.extractDate(selectedDate.value, 'YYYY-MM-DD')
+    const month = parsed.toLocaleDateString('es-ES', { month: 'long' })
+    return {
+        month: month.charAt(0).toUpperCase() + month.slice(1),
+        year: parsed.getFullYear()
+    }
 })
 
 const detailLabel = computed(() => {
@@ -1153,15 +1273,54 @@ const detailLabel = computed(() => {
     })
 })
 
-const visibleRooms = computed(() => {
-    if (!selectedHabitacionIds.value.length) return []
-    return rooms.value.filter((r) => selectedHabitacionIds.value.includes(r.id))
+const roomsGrouped = computed(() => {
+    const map = new Map()
+    for (const room of rooms.value) {
+        const key = Number(room.casa_id) || 0
+        if (!map.has(key)) {
+            map.set(key, {
+                casa_id: key,
+                casa_nombre: room.casa_nombre || 'Casa',
+                rooms: []
+            })
+        }
+        map.get(key).rooms.push(room)
+    }
+    return [...map.values()]
+})
+
+const visibleRoomsGrouped = computed(() => (
+    roomsGrouped.value
+        .map((grupo) => ({
+            ...grupo,
+            rooms: grupo.rooms.filter((r) => selectedHabitacionIds.value.includes(r.id))
+        }))
+        .filter((grupo) => grupo.rooms.length)
+))
+
+const visibleRooms = computed(() => visibleRoomsGrouped.value.flatMap((grupo) => grupo.rooms))
+
+const planningRows = computed(() => {
+    const rows = []
+    for (const grupo of visibleRoomsGrouped.value) {
+        if (showCasaSections.value) {
+            rows.push({
+                type: 'casa',
+                key: `casa-${grupo.casa_id}`,
+                casa_nombre: grupo.casa_nombre
+            })
+        }
+        for (const room of grupo.rooms) {
+            rows.push({ type: 'room', key: `room-${room.id}`, room })
+        }
+    }
+    return rows
 })
 
 const legend = computed(() =>
     visibleRooms.value.map((r) => ({
         key: `room-${r.id}`,
-        label: r.nombre,
+        label: showCasaSections.value && r.casa_nombre ? `${r.casa_nombre} · ${r.nombre}` : r.nombre,
         color: roomColor(r)
     }))
 )
@@ -1170,7 +1329,9 @@ const habitacionOptions = computed(() =>
     rooms.value
         .filter((h) => h.activo !== false)
         .map((h) => ({
-            label: `${h.nombre} (${h.tipo}, cap. ${h.capacidad})`,
+            label: showCasaSections.value && h.casa_nombre
+                ? `${h.casa_nombre} · ${h.nombre} (${h.tipo}, cap. ${h.capacidad})`
+                : `${h.nombre} (${h.tipo}, cap. ${h.capacidad})`,
             value: h.id
         }))
 )
@@ -1324,10 +1485,10 @@ const occupancyPct = computed(() => {
 const occupancyLabel = computed(() => `${occupancyPct.value}% de noches-habitación ocupadas (confirmadas)`)
 
 const metricCards = computed(() => [
-    { label: 'Confirmadas', value: stats.value.confirmadas, icon: 'event_available', color: '#0f766e', bg: '#ecfdf5', iconBg: '#ccfbf1' },
-    { label: 'Pendientes', value: stats.value.pendientes, icon: 'hourglass_top', color: '#c2410c', bg: '#fff7ed', iconBg: '#ffedd5' },
-    { label: 'Privadas', value: filteredReservas.value.filter((r) => r.habitacion_tipo === 'privada').length, icon: 'lock', color: '#1d4ed8', bg: '#eff6ff', iconBg: '#dbeafe' },
-    { label: 'Compartidas', value: filteredReservas.value.filter((r) => r.habitacion_tipo === 'compartida').length, icon: 'groups', color: '#7c3aed', bg: '#f5f3ff', iconBg: '#ede9fe' }
+    { label: 'Confirmadas', value: stats.value.confirmadas, icon: 'event_available', tone: 'wine' },
+    { label: 'Pendientes', value: stats.value.pendientes, icon: 'hourglass_top', tone: 'warn' },
+    { label: 'Privadas', value: filteredReservas.value.filter((r) => r.habitacion_tipo === 'privada').length, icon: 'lock', tone: 'blue' },
+    { label: 'Compartidas', value: filteredReservas.value.filter((r) => r.habitacion_tipo === 'compartida').length, icon: 'groups', tone: 'violet' }
 ])
 
 const typeBars = computed(() => {
@@ -1340,9 +1501,22 @@ const typeBars = computed(() => {
     ]
 })
 
-watch([casaActivaId, monthKey], () => {
+watch([filtroCasaId, monthKey, viewMode], () => {
     if (skipMonthWatch) return
     loadData()
+})
+
+watch(viewMode, (mode) => {
+    if (mode !== 'mensual' || filtroCasaId.value != null) return
+    const fallback = casaActivaId.value ?? proyectoStore.casas[0]?.id ?? null
+    if (fallback == null) return
+    skipMonthWatch = true
+    filtroCasaId.value = fallback
+    skipMonthWatch = false
+    Notify.create({
+        type: 'info',
+        message: 'La vista mensual muestra una sola casa.'
+    })
 })
 
 watch(
@@ -1368,6 +1542,11 @@ function formatLocalDate(value) {
     const m = String(d.getMonth() + 1).padStart(2, '0')
     const day = String(d.getDate()).padStart(2, '0')
     return `${y}-${m}-${day}`
+}
+
+function isWeekend(iso) {
+    const weekday = qdate.extractDate(iso, 'YYYY-MM-DD').getDay()
+    return weekday === 0 || weekday === 6
 }
 
 function weekdayShort(iso) {
@@ -1438,7 +1617,7 @@ function roomColor(roomOrEv) {
     if (typeof color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(color)) {
         return color
     }
-    return '#0f766e'
+    return '#7a1f2b'
 }
 
 /** Tint derived from the theme surface so the cards stay readable in light and dark mode. */
@@ -1570,7 +1749,10 @@ function viewModeLabel() {
 }
 
 function buildExportTitle() {
-    const casa = proyectoStore.casaActiva?.nombre
+    const casa = calendarCasaId.value == null
+        ? 'Todas las casas'
+        : (proyectoStore.casas.find((c) => Number(c.id) === Number(calendarCasaId.value))?.nombre
+            || proyectoStore.casaActiva?.nombre)
         || 'Casa'
     const period = viewMode.value === 'dia' ? selectedDate.value : monthLabel.value
     return `${casa} · ${period} · ${viewModeLabel()}`
@@ -1602,8 +1784,11 @@ async function requestCalendarPdf() {
         throw new Error('El calendario aún no está listo.')
     }
     const { desde, hasta } = currentRange()
+    if (viewMode.value === 'mensual' && calendarCasaId.value == null) {
+        throw new Error('Seleccione una casa para exportar la vista mensual.')
+    }
     const params = {
-        casa_id: casaActivaId.value,
+        casa_id: calendarCasaId.value ?? undefined,
         desde,
         hasta,
         view_mode: viewMode.value,
@@ -1946,7 +2131,7 @@ async function saveCreateReserva() {
 }
 
 async function loadData() {
-    if (!casaActivaId.value) {
+    if (viewMode.value === 'mensual' && calendarCasaId.value == null) {
         rooms.value = []
         reservas.value = []
         return
@@ -1957,18 +2142,18 @@ async function loadData() {
         const parsed = qdate.extractDate(selectedDate.value, 'YYYY-MM-DD')
         const desde = formatLocalDate(new Date(parsed.getFullYear(), parsed.getMonth(), 1))
         const hasta = formatLocalDate(new Date(parsed.getFullYear(), parsed.getMonth() + 1, 0))
+        const params = { desde, hasta }
+        if (calendarCasaId.value != null) {
+            params.casa_id = calendarCasaId.value
+        }
 
         const [calRes, listRes] = await Promise.all([
             api.get('/reservas/calendario', {
-                params: { casa_id: casaActivaId.value, desde, hasta },
+                params,
                 skipScopeParams: true
             }),
             api.get('/reservas', {
-                params: {
-                    casa_id: casaActivaId.value,
-                    desde,
-                    hasta
-                },
+                params,
                 skipScopeParams: true
             })
         ])
@@ -1997,6 +2182,9 @@ onMounted(async () => {
     if (!proyectoStore.initialized) {
         await proyectoStore.refreshCatalog()
     }
+    if (filtroCasaId.value == null && casaActivaId.value != null) {
+        filtroCasaId.value = casaActivaId.value
+    }
     const fechaRaw = String(route.query.fecha || '').slice(0, 10)
     if (/^\d{4}-\d{2}-\d{2}$/.test(fechaRaw)) {
         selectedDate.value = fechaRaw
@@ -2017,25 +2205,25 @@ onMounted(async () => {
  * hereden el mismo tema que la página.
  */
 :global(body) {
-    --plan-surface: #ffffff;
+    --plan-surface: var(--app-surface, #ffffff);
     --plan-day: #ffffff;
-    --plan-muted-bg: #f8fafc;
-    --plan-soft: #f8fffc;
-    --plan-today-bg: #ecfdf5;
-    --plan-ink: #0f172a;
-    --plan-ink-2: #334155;
-    --plan-muted: #64748b;
-    --plan-faint: #94a3b8;
-    --plan-border: rgba(15, 23, 42, 0.08);
-    --plan-border-soft: rgba(15, 23, 42, 0.06);
-    --plan-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
-    --plan-cell-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-    --plan-brand: #0f766e;
-    --plan-brand-soft: rgba(15, 118, 110, 0.35);
+    --plan-muted-bg: var(--app-surface-muted, #f3ece1);
+    --plan-soft: rgba(var(--theme-wine-rgb, 122, 31, 43), 0.06);
+    --plan-today-bg: rgba(var(--theme-gold-rgb, 184, 137, 59), 0.12);
+    --plan-ink: var(--app-ink, #2b1d1f);
+    --plan-ink-2: var(--app-ink-muted, #7b6a62);
+    --plan-muted: var(--app-ink-muted, #7b6a62);
+    --plan-faint: var(--app-ink-faint, #a89890);
+    --plan-border: var(--app-border, rgba(184, 137, 59, 0.18));
+    --plan-border-soft: var(--app-gold-soft, rgba(184, 137, 59, 0.1));
+    --plan-shadow: var(--app-shadow-md, 0 8px 24px rgba(42, 20, 24, 0.07));
+    --plan-cell-shadow: var(--app-shadow-sm, 0 1px 3px rgba(42, 20, 24, 0.05));
+    --plan-brand: var(--theme-wine, #7a1f2b);
+    --plan-brand-soft: rgba(var(--theme-wine-rgb, 122, 31, 43), 0.35);
     --plan-warn: #b45309;
     --plan-count: #ea580c;
-    --plan-outside: #cbd5e1;
-    --plan-weekend: rgba(15, 23, 42, 0.022);
+    --plan-outside: #c4b5a8;
+    --plan-weekend: rgba(var(--theme-wine-rgb, 122, 31, 43), 0.03);
     --plan-ok-ink: #047857;
     --plan-ok-bg: rgba(16, 185, 129, 0.12);
     --plan-warn-ink: #b45309;
@@ -2046,25 +2234,25 @@ onMounted(async () => {
 }
 
 :global(body.body--dark) {
-    --plan-surface: #1e293b;
-    --plan-day: #243447;
-    --plan-muted-bg: #162033;
-    --plan-soft: rgba(45, 212, 191, 0.1);
-    --plan-today-bg: rgba(45, 212, 191, 0.08);
-    --plan-ink: #f1f5f9;
-    --plan-ink-2: #e2e8f0;
-    --plan-muted: #cbd5e1;
-    --plan-faint: #94a3b8;
-    --plan-border: rgba(148, 163, 184, 0.2);
-    --plan-border-soft: rgba(148, 163, 184, 0.14);
-    --plan-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-    --plan-cell-shadow: 0 1px 3px rgba(0, 0, 0, 0.32);
-    --plan-brand: #2dd4bf;
-    --plan-brand-soft: rgba(45, 212, 191, 0.55);
+    --plan-surface: color-mix(in srgb, var(--theme-dark, #241a1c) 92%, #000);
+    --plan-day: color-mix(in srgb, var(--theme-dark, #241a1c) 88%, var(--theme-wine-deep, #4a111b));
+    --plan-muted-bg: var(--theme-dark-page, #1a1214);
+    --plan-soft: rgba(var(--theme-wine-rgb, 122, 31, 43), 0.16);
+    --plan-today-bg: rgba(var(--theme-gold-rgb, 184, 137, 59), 0.14);
+    --plan-ink: #f1e8dc;
+    --plan-ink-2: #e2d5c8;
+    --plan-muted: #b3a597;
+    --plan-faint: #8a7a70;
+    --plan-border: rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.22);
+    --plan-border-soft: rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.12);
+    --plan-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+    --plan-cell-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --plan-brand: var(--theme-gold-light, #d4af6a);
+    --plan-brand-soft: rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.45);
     --plan-warn: #fbbf24;
     --plan-count: #fb923c;
-    --plan-outside: #64748b;
-    --plan-weekend: rgba(255, 255, 255, 0.025);
+    --plan-outside: #8a7a70;
+    --plan-weekend: rgba(255, 255, 255, 0.03);
     --plan-ok-ink: #6ee7b7;
     --plan-ok-bg: rgba(16, 185, 129, 0.16);
     --plan-warn-ink: #fcd34d;
@@ -2078,6 +2266,7 @@ onMounted(async () => {
     padding: 12px 16px 24px;
     min-height: calc(100vh - 70px);
     color: var(--plan-ink);
+    background: transparent;
 }
 
 .planning-shell {
@@ -2115,16 +2304,27 @@ onMounted(async () => {
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: #0f766e;
-    color: #fff;
+    background: #0a0a0a;
+    color: var(--theme-gold-pale, #efe0bf);
+    border: 1.5px solid var(--theme-gold-light, #d4af6a);
+    box-shadow: 0 0 0 2px rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.16);
     display: grid;
     place-items: center;
+    font-family: var(--app-font-display), Georgia, serif;
     font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.sidebar-brand-mark--logo {
+    padding: 0;
 }
 
 .sidebar-brand-title {
+    font-family: var(--app-font-display), Georgia, serif;
     font-weight: 700;
-    color: var(--plan-brand);
+    color: var(--theme-gold-bright, var(--theme-gold-light, #d4af6a));
 }
 
 .sidebar-brand-sub {
@@ -2248,8 +2448,85 @@ onMounted(async () => {
     min-width: 160px;
 }
 
+.casa-filter-select {
+    min-width: 180px;
+    max-width: 240px;
+}
+
+.room-casa-label {
+    margin: 8px 0 4px;
+    font-size: 0.68rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--app-ink-muted);
+}
+
+.book-room-casa {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--app-ink-muted);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.grid-casa-head {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    font-weight: 750;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--q-primary);
+    background: color-mix(in srgb, var(--q-primary) 8%, transparent);
+    border-bottom: 1px solid var(--app-border);
+}
+
+.nav-arrow-btn {
+    color: var(--plan-ink) !important;
+    background: rgba(var(--theme-wine-rgb, 122, 31, 43), 0.08);
+    border: 1px solid var(--plan-border);
+}
+
+.nav-arrow-btn:hover {
+    background: rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.14);
+    border-color: var(--theme-gold-light, #d4af6a);
+    color: var(--theme-gold-light, #d4af6a) !important;
+}
+
+.plan-outline-btn {
+    border-radius: 10px !important;
+    font-weight: 650 !important;
+    letter-spacing: 0.04em;
+    color: var(--theme-wine, #7a1f2b) !important;
+    border: 1px solid rgba(var(--theme-wine-rgb, 122, 31, 43), 0.45) !important;
+    background: transparent !important;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.plan-outline-btn :deep(.q-icon) {
+    color: inherit !important;
+}
+
+.plan-outline-btn:hover {
+    border-color: var(--theme-gold, #b8893b) !important;
+    color: var(--theme-wine-deep, #4a111b) !important;
+    background: rgba(var(--theme-gold-rgb, 184, 137, 59), 0.1) !important;
+    box-shadow: 0 0 0 1px rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.25);
+}
+
 .hoy-btn {
-    border-radius: 999px;
+    border-radius: 999px !important;
+    min-width: 52px;
+    padding: 0 14px !important;
+    text-transform: uppercase;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.08em;
 }
 
 .view-switch .q-btn {
@@ -2259,8 +2536,10 @@ onMounted(async () => {
 }
 
 .view-active {
-    background: #0f766e !important;
-    color: #fff !important;
+    background: linear-gradient(135deg, var(--theme-wine-light, #8e2a36) 0%, var(--theme-wine, #7a1f2b) 55%, var(--theme-wine-deep, #4a111b) 100%) !important;
+    color: #f7efe3 !important;
+    border: 1px solid rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.45) !important;
+    box-shadow: 0 4px 14px rgba(var(--theme-wine-rgb, 122, 31, 43), 0.28);
 }
 
 .search-input {
@@ -2269,7 +2548,16 @@ onMounted(async () => {
 
 .create-btn {
     border-radius: 12px;
-    font-weight: 600;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    color: #f7efe3 !important;
+    background: linear-gradient(135deg, var(--theme-wine-light, #8e2a36) 0%, var(--theme-wine, #7a1f2b) 55%, var(--theme-wine-deep, #4a111b) 100%) !important;
+    border: 1px solid rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.4);
+    box-shadow: 0 4px 14px rgba(var(--theme-wine-rgb, 122, 31, 43), 0.28);
+}
+
+.create-btn:hover {
+    box-shadow: 0 6px 18px rgba(var(--theme-wine-rgb, 122, 31, 43), 0.36), 0 0 0 1px rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.35);
 }
 
 .legend-row {
@@ -2783,7 +3071,7 @@ onMounted(async () => {
     gap: 1px;
     width: 100%;
     border: 1px solid var(--room-border, #b6d5d1);
-    border-left: 3px solid var(--room-color, #0f766e);
+    border-left: 3px solid var(--room-color, #7a1f2b);
     border-radius: 8px;
     padding: 4px 6px;
     cursor: pointer;
@@ -2999,7 +3287,7 @@ onMounted(async () => {
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    color: #0f766e;
+    color: #7a1f2b;
     font-size: 10px;
     font-weight: 600;
 }
@@ -3025,15 +3313,15 @@ onMounted(async () => {
 }
 
 .reserva-dialog {
-    width: min(1200px, 98vw);
-    max-width: 1200px;
+    width: min(1080px, 96vw);
+    max-width: 1080px;
     border-radius: 22px !important;
 }
 
 .reserva-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 20px;
     align-items: stretch;
 }
 
@@ -3042,23 +3330,100 @@ onMounted(async () => {
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 12px 14px;
+    gap: 4px;
+    padding: 18px 18px 16px;
     border: 1px solid var(--plan-border);
-    border-radius: 14px;
+    border-radius: 16px;
     background: var(--plan-muted-bg);
-}
-
-.reserva-pane > .row {
-    flex: 1;
 }
 
 .reserva-pane-title {
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--plan-brand);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+}
+
+.reserva-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--plan-border-soft, rgba(var(--theme-gold-rgb), 0.12));
+}
+
+.reserva-block--last {
+    border-bottom: 0;
+    padding-bottom: 0;
+    margin-top: auto;
+}
+
+.reserva-block-label {
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--plan-faint, var(--app-ink-muted));
+}
+
+.reserva-salida {
+    min-height: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    border: 1px dashed rgba(var(--theme-gold-rgb), 0.28);
+    background: rgba(var(--theme-wine-rgb), 0.04);
+}
+
+.reserva-salida-label {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--plan-faint, var(--app-ink-muted));
+}
+
+.reserva-salida-value {
+    font-size: 0.95rem;
+    font-weight: 650;
+    color: var(--plan-ink, var(--app-ink));
+    font-variant-numeric: tabular-nums;
+}
+
+.reserva-camas-meta {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(var(--theme-wine-rgb), 0.06);
+    border: 1px solid rgba(var(--theme-wine-rgb), 0.1);
+    color: var(--plan-muted, var(--app-ink-muted));
+    font-size: 0.82rem;
+}
+
+.reserva-camas-meta strong {
+    color: var(--plan-brand, var(--theme-wine));
+    font-weight: 700;
+}
+
+.reserva-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    min-height: 40px;
+    padding: 4px 2px;
+}
+
+.reserva-notas {
+    width: 100%;
 }
 
 .reserva-banner {
@@ -3066,15 +3431,16 @@ onMounted(async () => {
 }
 
 .reserva-banner-placeholder {
-    min-height: 40px;
+    min-height: 48px;
     display: flex;
     align-items: center;
-    padding: 8px 10px;
-    border-radius: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
     background: var(--plan-border-soft);
+    line-height: 1.35;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
     .reserva-layout {
         grid-template-columns: 1fr;
     }
@@ -3563,6 +3929,8 @@ svg.rv-tile-bed {
     border-radius: 16px;
     padding: 12px;
     min-height: 110px;
+    border: 1px solid transparent;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .metric-icon {
@@ -3578,13 +3946,61 @@ svg.rv-tile-bed {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #64748b;
+    color: var(--plan-muted, #7b6a62);
 }
 
 .metric-value {
     font-size: 28px;
     font-weight: 700;
     line-height: 1.1;
+}
+
+.metric-tile--wine {
+    background: linear-gradient(160deg, var(--theme-ivory) 0%, var(--theme-ivory-2) 100%);
+    border-color: rgba(var(--theme-wine-rgb), 0.14);
+}
+.metric-tile--wine .metric-icon {
+    background: rgba(var(--theme-wine-rgb), 0.12);
+    color: var(--theme-wine);
+}
+.metric-tile--wine .metric-value {
+    color: var(--theme-wine);
+}
+
+.metric-tile--warn {
+    background: linear-gradient(160deg, #fff7ed 0%, #ffedd5 100%);
+    border-color: rgba(194, 65, 12, 0.16);
+}
+.metric-tile--warn .metric-icon {
+    background: rgba(194, 65, 12, 0.12);
+    color: #c2410c;
+}
+.metric-tile--warn .metric-value {
+    color: #c2410c;
+}
+
+.metric-tile--blue {
+    background: linear-gradient(160deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: rgba(47, 111, 191, 0.16);
+}
+.metric-tile--blue .metric-icon {
+    background: rgba(47, 111, 191, 0.12);
+    color: var(--theme-blue, #2f6fbf);
+}
+.metric-tile--blue .metric-value {
+    color: var(--theme-blue, #2f6fbf);
+}
+
+.metric-tile--violet {
+    background: linear-gradient(160deg, #f5f3ff 0%, #ede9fe 100%);
+    border-color: rgba(107, 45, 139, 0.16);
+}
+.metric-tile--violet .metric-icon {
+    background: rgba(107, 45, 139, 0.12);
+    color: var(--theme-violet, #6b2d8b);
+}
+.metric-tile--violet .metric-value {
+    color: var(--theme-violet, #6b2d8b);
 }
 
 .metrics-section-label {
@@ -3788,19 +4204,90 @@ body.body--dark .metrics-card .text-grey-7,
 body.body--dark .reserva-dialog .text-grey-6,
 body.body--dark .reserva-dialog .text-grey-7,
 body.body--dark .reserva-dialog .text-grey-8 {
-    color: #cbd5e1 !important;
+    color: var(--app-ink-muted, #b3a597) !important;
+}
+
+body.body--dark .reserva-dialog .reserva-pane,
+body.app-dark .reserva-dialog .reserva-pane {
+    background:
+        radial-gradient(120% 80% at 0% 0%, rgba(var(--theme-wine-rgb), 0.18), transparent 55%),
+        var(--theme-dark-page) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.18) !important;
+}
+
+body.body--dark .reserva-dialog .reserva-pane-title,
+body.app-dark .reserva-dialog .reserva-pane-title {
+    color: var(--theme-gold-light) !important;
+}
+
+body.body--dark .reserva-dialog .reserva-block,
+body.app-dark .reserva-dialog .reserva-block {
+    border-bottom-color: rgba(var(--theme-gold-light-rgb), 0.1) !important;
+}
+
+body.body--dark .reserva-dialog .reserva-block-label,
+body.app-dark .reserva-dialog .reserva-block-label {
+    color: rgba(var(--theme-gold-pale-rgb, 239, 224, 191), 0.72) !important;
+}
+
+body.body--dark .reserva-dialog .reserva-salida,
+body.app-dark .reserva-dialog .reserva-salida {
+    background: rgba(var(--theme-wine-rgb), 0.14) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.22) !important;
+}
+
+body.body--dark .reserva-dialog .reserva-salida-value,
+body.app-dark .reserva-dialog .reserva-salida-value {
+    color: var(--theme-gold-pale) !important;
+}
+
+body.body--dark .reserva-dialog .reserva-camas-meta,
+body.app-dark .reserva-dialog .reserva-camas-meta {
+    background: rgba(var(--theme-wine-rgb), 0.16) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.14) !important;
+    color: var(--app-ink-muted, #b3a597) !important;
+}
+
+body.body--dark .reserva-dialog .reserva-camas-meta strong,
+body.app-dark .reserva-dialog .reserva-camas-meta strong {
+    color: var(--theme-gold-pale) !important;
+}
+
+body.body--dark .reserva-dialog .reserva-banner-placeholder,
+body.app-dark .reserva-dialog .reserva-banner-placeholder {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: var(--app-ink-muted, #b3a597) !important;
 }
 
 body.body--dark .planning-page .view-switch .q-btn.text-grey-6 {
-    color: #e2e8f0 !important;
+    color: var(--plan-ink-2, #e2d5c8) !important;
 }
 
-body.body--dark .planning-page .toolbar-left .q-btn:not(.hoy-btn) {
-    color: var(--plan-ink);
+body.body--dark .planning-page .toolbar-left .nav-arrow-btn {
+    color: var(--plan-ink) !important;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--plan-border);
 }
 
-body.body--dark .metrics-card .text-teal-10 {
-    color: #5eead4 !important;
+body.body--dark .planning-page .plan-outline-btn {
+    color: var(--theme-gold-light, #d4af6a) !important;
+    border-color: rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.42) !important;
+    background: rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.06) !important;
+}
+
+body.body--dark .planning-page .plan-outline-btn:hover {
+    color: var(--theme-gold-pale, #efe0bf) !important;
+    border-color: var(--theme-gold-light, #d4af6a) !important;
+    background: rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.14) !important;
+}
+
+body.body--dark .planning-page .hoy-btn {
+    box-shadow: inset 0 0 0 1px rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.12);
+}
+
+body.body--dark .metrics-card .text-primary,
+body.body--dark .text-primary {
+    color: var(--theme-gold-light, #d4af6a) !important;
 }
 
 body.body--dark .planning-page .mini-date {
@@ -3833,6 +4320,572 @@ body.body--dark .planning-page .ep-month .q-calendar-month__day.q-outside .q-cal
 
 body.body--dark .planning-page .workload-card .q-linear-progress__track,
 body.body--dark .metrics-card .q-linear-progress__track {
-    background: #134e4a !important;
+    background: rgba(var(--theme-wine-rgb, 122, 31, 43), 0.35) !important;
+}
+
+body.body--dark .planning-page .q-linear-progress__model {
+    color: var(--theme-gold-light, #d4af6a) !important;
+}
+
+body.body--dark .planning-sidebar,
+body.body--dark .planning-main,
+body.body--dark .calendar-panel,
+body.body--dark .planning-grid-wrap,
+body.body--dark .book-grid-wrap,
+body.body--dark .detail-card,
+body.body--dark .metrics-card,
+body.body--dark .workload-card {
+    background: var(--plan-surface) !important;
+    border-color: var(--plan-border) !important;
+    box-shadow: var(--plan-shadow);
+}
+
+body.body--dark .metrics-card .metric-tile,
+body.app-dark .metrics-card .metric-tile {
+    background:
+        radial-gradient(120% 90% at 0% 0%, rgba(var(--theme-wine-rgb), 0.16), transparent 55%),
+        color-mix(in srgb, var(--theme-dark) 88%, var(--theme-wine-deep)) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.18) !important;
+}
+
+body.body--dark .metrics-card .metric-label,
+body.app-dark .metrics-card .metric-label {
+    color: var(--app-ink-muted, #b3a597) !important;
+}
+
+body.body--dark .metrics-card .metric-tile--wine .metric-icon,
+body.app-dark .metrics-card .metric-tile--wine .metric-icon {
+    background: rgba(var(--theme-wine-on-dark-rgb, 232, 165, 174), 0.16) !important;
+    color: var(--theme-wine-on-dark, #e8a5ae) !important;
+}
+body.body--dark .metrics-card .metric-tile--wine .metric-value,
+body.app-dark .metrics-card .metric-tile--wine .metric-value {
+    color: var(--theme-gold-pale) !important;
+}
+
+body.body--dark .metrics-card .metric-tile--warn .metric-icon,
+body.app-dark .metrics-card .metric-tile--warn .metric-icon {
+    background: rgba(224, 165, 38, 0.16) !important;
+    color: var(--theme-warning, #e0a526) !important;
+}
+body.body--dark .metrics-card .metric-tile--warn .metric-value,
+body.app-dark .metrics-card .metric-tile--warn .metric-value {
+    color: #f0c14d !important;
+}
+
+body.body--dark .metrics-card .metric-tile--blue .metric-icon,
+body.app-dark .metrics-card .metric-tile--blue .metric-icon {
+    background: rgba(47, 111, 191, 0.2) !important;
+    color: #7eb6f0 !important;
+}
+body.body--dark .metrics-card .metric-tile--blue .metric-value,
+body.app-dark .metrics-card .metric-tile--blue .metric-value {
+    color: #9ec5f5 !important;
+}
+
+body.body--dark .metrics-card .metric-tile--violet .metric-icon,
+body.app-dark .metrics-card .metric-tile--violet .metric-icon {
+    background: rgba(107, 45, 139, 0.22) !important;
+    color: #c4a0e0 !important;
+}
+body.body--dark .metrics-card .metric-tile--violet .metric-value,
+body.app-dark .metrics-card .metric-tile--violet .metric-value {
+    color: #d4b8ea !important;
+}
+
+body.body--dark .metrics-card .metrics-bar .q-linear-progress__track,
+body.app-dark .metrics-card .metrics-bar .q-linear-progress__track {
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.body--dark .planning-page .q-table,
+body.body--dark .planning-page .q-markup-table,
+body.body--dark .book-grid {
+    background: var(--plan-surface) !important;
+    color: var(--plan-ink);
+}
+
+body.body--dark .planning-page .q-table thead tr th,
+body.body--dark .book-grid thead th {
+    background: color-mix(in srgb, var(--theme-dark) 78%, var(--theme-wine-deep)) !important;
+    color: var(--theme-gold-pale) !important;
+    border-color: var(--plan-border) !important;
+}
+
+body.body--dark .planning-page .q-table tbody td,
+body.body--dark .book-grid tbody td {
+    color: var(--plan-ink) !important;
+    border-color: var(--plan-border-soft) !important;
+}
+
+body.body--dark .planning-page .q-table tbody tr:nth-child(even) td,
+body.body--dark .book-grid tbody tr:nth-child(even) td {
+    background: rgba(0, 0, 0, 0.22) !important;
+}
+
+body.body--dark .planning-page .q-table tbody tr:hover td,
+body.body--dark .book-grid tbody tr:hover td {
+    background: rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.1) !important;
+}
+
+/* ═════════ Acabado lux del calendario ═════════ */
+.planning-page {
+    --lux-gold: var(--theme-gold);
+    --lux-gold-rgb: var(--theme-gold-rgb);
+    --lux-hair: rgba(var(--theme-gold-rgb), 0.14);
+    --lux-hair-strong: rgba(var(--theme-gold-rgb), 0.32);
+    --lux-head-bg: linear-gradient(180deg, var(--theme-ivory) 0%, var(--theme-ivory-2) 100%);
+    --lux-panel-glow: rgba(var(--theme-wine-rgb), 0.06);
+}
+
+body.body--dark .planning-page {
+    --lux-gold: var(--theme-gold-light);
+    --lux-gold-rgb: var(--theme-gold-light-rgb);
+    --lux-hair: rgba(var(--theme-gold-light-rgb), 0.1);
+    --lux-hair-strong: rgba(var(--theme-gold-light-rgb), 0.3);
+    --lux-head-bg: linear-gradient(180deg,
+        color-mix(in srgb, var(--theme-dark) 78%, var(--theme-wine-deep)) 0%,
+        color-mix(in srgb, var(--theme-dark) 90%, var(--theme-wine-deep)) 100%);
+    --lux-panel-glow: rgba(var(--theme-wine-rgb), 0.22);
+}
+
+/* Paneles con brillo vino y filo dorado */
+.planning-page .planning-sidebar,
+.planning-page .planning-main {
+    border-radius: 22px;
+    border-color: var(--lux-hair-strong) !important;
+    background:
+        radial-gradient(110% 55% at 0% 0%, var(--lux-panel-glow), transparent 60%),
+        var(--plan-surface) !important;
+}
+
+.planning-page .planning-main {
+    position: relative;
+}
+
+.planning-page .planning-sidebar::before,
+.planning-page .planning-main::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 28px;
+    right: 28px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--lux-gold), transparent);
+    pointer-events: none;
+}
+
+/* Título del mes editorial */
+.planning-page .month-title {
+    font-family: var(--app-font-display), Georgia, serif;
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--theme-wine-deep);
+    white-space: nowrap;
+}
+
+.planning-page .month-title em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--lux-gold);
+}
+
+body.body--dark .planning-page .month-title {
+    color: var(--theme-gold-pale);
+}
+
+.planning-page .planning-toolbar {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--lux-hair);
+}
+
+/* Leyenda en chips */
+.planning-page .legend-row {
+    gap: 6px 8px;
+}
+
+.planning-page .legend-item {
+    padding: 3px 10px 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--lux-hair);
+    background: rgba(var(--lux-gold-rgb), 0.04);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+}
+
+.planning-page .legend-dot {
+    box-shadow: 0 0 0 3px rgba(var(--lux-gold-rgb), 0.12);
+}
+
+/* Mini calendario */
+.planning-page .mini-date {
+    border-color: var(--lux-hair-strong) !important;
+    background:
+        radial-gradient(120% 70% at 100% 0%, rgba(var(--lux-gold-rgb), 0.08), transparent 60%),
+        var(--plan-muted-bg) !important;
+}
+
+.planning-page .mini-date .q-date__navigation .q-btn__content,
+.planning-page .mini-date .q-date__navigation .relative-position {
+    font-family: var(--app-font-display), Georgia, serif;
+    font-weight: 600;
+}
+
+.planning-page .mini-date .q-date__calendar-weekdays > div {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lux-gold);
+    opacity: 0.85;
+}
+
+.planning-page .mini-date .q-date__calendar-item .q-btn {
+    transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.planning-page .mini-date .q-date__calendar-item .q-btn:hover {
+    transform: scale(1.08);
+}
+
+.planning-page .mini-date .q-date__today {
+    box-shadow: 0 0 0 1px var(--lux-gold) !important;
+    color: var(--lux-gold) !important;
+}
+
+.planning-page .mini-date .q-date__calendar-item--in .q-btn.bg-primary,
+.planning-page .mini-date .q-date__calendar-item .q-btn.bg-primary {
+    background: linear-gradient(135deg, var(--theme-gold-pale), var(--theme-gold-light) 45%, var(--theme-gold)) !important;
+    color: var(--theme-ink) !important;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(var(--theme-gold-rgb), 0.4) !important;
+}
+
+/* Sidebar: rótulos y estadísticas */
+.planning-page .sidebar-section-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--lux-gold);
+}
+
+.planning-page .sidebar-section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--lux-hair-strong), transparent);
+}
+
+.planning-page .workload-card,
+.planning-page .stat-mini {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    border-color: var(--lux-hair) !important;
+}
+
+.planning-page .workload-card .q-linear-progress__model {
+    background: linear-gradient(90deg, var(--theme-wine), var(--theme-gold-light)) !important;
+}
+
+.planning-page .stat-mini::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--stat-accent, var(--lux-gold)), transparent);
+}
+
+.planning-page .stat-mini--warn { --stat-accent: var(--plan-warn); }
+.planning-page .stat-mini--ok { --stat-accent: var(--lux-gold); }
+
+.planning-page .stat-mini-value {
+    font-family: var(--app-font-display), Georgia, serif;
+    font-size: 1.9rem;
+    font-weight: 600;
+}
+
+.planning-page .stat-mini--ok .stat-mini-value {
+    color: var(--lux-gold);
+}
+
+/* ── Rejillas (Mapa y Día) ── */
+.planning-page .book-grid-wrap,
+.planning-page .planning-grid-wrap {
+    padding: 0;
+    border-radius: 18px;
+    border-color: var(--lux-hair-strong) !important;
+}
+
+.planning-page .book-corner,
+.planning-page .book-room-head,
+.planning-page .book-day-label,
+.planning-page .book-cell,
+.planning-page .grid-corner,
+.planning-page .grid-day-head,
+.planning-page .grid-room,
+.planning-page .grid-cell {
+    border-width: 0 1px 1px 0;
+    border-color: var(--lux-hair);
+}
+
+.planning-page .book-corner,
+.planning-page .book-room-head,
+.planning-page .grid-corner,
+.planning-page .grid-day-head {
+    background: var(--lux-head-bg) !important;
+    border-bottom: 1px solid var(--lux-hair-strong);
+    backdrop-filter: blur(8px);
+}
+
+.planning-page .book-corner,
+.planning-page .grid-corner {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--lux-gold);
+}
+
+/* Cabecera de habitación con el color de la habitación */
+.planning-page .book-room-head {
+    padding: 10px 12px 9px;
+    box-shadow: inset 0 3px 0 var(--room-color, var(--lux-gold));
+}
+
+.planning-page .book-room-casa {
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    color: var(--lux-gold);
+}
+
+.planning-page .book-room-head-name,
+.planning-page .grid-room-name {
+    font-family: var(--app-font-display), Georgia, serif;
+    font-size: 14.5px;
+    font-weight: 600;
+}
+
+.planning-page .book-room-head .legend-dot,
+.planning-page .grid-room .legend-dot {
+    width: 9px;
+    height: 9px;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--room-color, var(--lux-gold)) 22%, transparent),
+        0 0 10px color-mix(in srgb, var(--room-color, var(--lux-gold)) 55%, transparent);
+}
+
+.planning-page .grid-room {
+    box-shadow: inset 3px 0 0 var(--room-color, var(--lux-gold));
+}
+
+/* Columna de días */
+.planning-page .book-day-label {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    padding: 6px 10px;
+}
+
+.planning-page .grid-day-wd {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: var(--plan-faint);
+}
+
+.planning-page .grid-day-num {
+    font-family: var(--app-font-display), Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.05;
+    color: var(--plan-ink);
+}
+
+.planning-page .book-day-label.is-weekend .grid-day-wd,
+.planning-page .grid-day-head.is-weekend .grid-day-wd {
+    color: var(--lux-gold);
+}
+
+.planning-page .book-cell.is-weekend,
+.planning-page .grid-cell.is-weekend,
+.planning-page .book-day-label.is-weekend {
+    background-color: color-mix(in srgb, var(--plan-surface) 96%, var(--lux-gold)) !important;
+}
+
+/* Hoy: banda dorada que cruza la fila / columna */
+.planning-page .book-day-label.is-today,
+.planning-page .grid-day-head.is-today {
+    background:
+        linear-gradient(90deg, rgba(var(--lux-gold-rgb), 0.28), rgba(var(--lux-gold-rgb), 0.08)) ,
+        var(--plan-surface) !important;
+    box-shadow: inset 3px 0 0 var(--lux-gold);
+}
+
+.planning-page .grid-day-head.is-today {
+    box-shadow: inset 0 -3px 0 var(--lux-gold);
+}
+
+.planning-page .book-day-label.is-today .grid-day-num,
+.planning-page .grid-day-head.is-today .grid-day-num,
+.planning-page .book-day-label.is-today .grid-day-wd,
+.planning-page .grid-day-head.is-today .grid-day-wd {
+    color: var(--lux-gold);
+}
+
+.planning-page .book-cell.is-today,
+.planning-page .grid-cell.is-today {
+    background-color: color-mix(in srgb, var(--plan-surface) 90%, var(--lux-gold)) !important;
+    border-top: 1px solid var(--lux-hair-strong);
+}
+
+/* Celdas */
+.planning-page .book-cell,
+.planning-page .grid-cell {
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.planning-page .book-cell:hover,
+.planning-page .grid-cell:hover {
+    background-color: color-mix(in srgb, var(--plan-surface) 88%, var(--theme-wine)) !important;
+    box-shadow: inset 0 0 0 1px var(--lux-hair-strong);
+}
+
+.planning-page .book-empty,
+.planning-page .empty-slot {
+    border: 0;
+    color: var(--lux-gold);
+}
+
+.planning-page .book-empty .q-icon,
+.planning-page .empty-slot .q-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--lux-hair-strong);
+    background: rgba(var(--lux-gold-rgb), 0.08);
+    transform: scale(0.7);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.planning-page .book-cell:hover .book-empty .q-icon,
+.planning-page .grid-cell:hover .empty-slot .q-icon {
+    transform: scale(1);
+    background: rgba(var(--lux-gold-rgb), 0.18);
+}
+
+.planning-page .empty-slot {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.planning-page .grid-cell:hover .empty-slot {
+    opacity: 1;
+}
+
+/* Reservas: pastillas con el color de la habitación */
+.planning-page .book-name,
+.planning-page .plan-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--room-color) 40%, transparent) !important;
+    border-left: 3px solid var(--room-color) !important;
+    background:
+        linear-gradient(135deg,
+            color-mix(in srgb, var(--room-color) 26%, var(--plan-day)) 0%,
+            color-mix(in srgb, var(--room-color) 9%, var(--plan-day)) 100%) !important;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--room-color) 18%, transparent);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.planning-page .book-name::after,
+.planning-page .plan-card::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 55% 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent);
+    pointer-events: none;
+}
+
+.planning-page .book-name:hover,
+.planning-page .plan-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--room-color) 30%, transparent);
+}
+
+.planning-page .book-name.is-pendiente,
+.planning-page .plan-card.is-pendiente {
+    border-style: dashed !important;
+    border-left-style: solid !important;
+}
+
+.planning-page .book-name-text,
+.planning-page .plan-card-title {
+    font-weight: 650;
+    letter-spacing: 0.005em;
+}
+
+/* Botón "Agregar" más discreto */
+.planning-page .cell-add-btn {
+    border-radius: 999px;
+    border-color: var(--lux-hair-strong);
+    background: transparent;
+    color: var(--lux-gold);
+    letter-spacing: 0.06em;
+}
+
+.planning-page .cell-add-btn:hover {
+    background: rgba(var(--lux-gold-rgb), 0.12);
+    border-color: var(--lux-gold);
+}
+
+/* Separador de casa en la vista Día */
+.planning-page .grid-casa-head {
+    font-family: var(--app-font-display), Georgia, serif;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    background: var(--lux-head-bg) !important;
+    border-color: var(--lux-hair-strong) !important;
+    color: var(--lux-gold) !important;
+}
+
+/* Scroll fino dorado en las rejillas */
+.planning-page .book-grid-wrap,
+.planning-page .planning-grid-wrap {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--lux-gold-rgb), 0.5) transparent;
+}
+
+.planning-page .book-grid-wrap::-webkit-scrollbar,
+.planning-page .planning-grid-wrap::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.planning-page .book-grid-wrap::-webkit-scrollbar-thumb,
+.planning-page .planning-grid-wrap::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background: linear-gradient(180deg, var(--theme-gold-light), var(--theme-wine));
+}
+
+.planning-page .book-grid-wrap::-webkit-scrollbar-track,
+.planning-page .planning-grid-wrap::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+@media (max-width: 1100px) {
+    .planning-page .planning-sidebar {
+        position: relative;
+    }
+}
+
+@media (max-width: 700px) {
+    .planning-page .month-title {
+        font-size: 1.3rem;
+    }
 }
 </style>

@@ -15,10 +15,11 @@
                         <q-tooltip>{{ menuToggleLabel }}</q-tooltip>
                     </q-btn>
                     <div class="brand-block">
-                        <div class="brand-mark" aria-hidden="true" />
+                        <img class="brand-logo" :src="brandStore.logoUrl" :alt="brandStore.name" />
                         <q-toolbar-title class="brand-title" shrink>
-                            <span class="brand-title-full">SISTEMA DE GESTIÓN DE RESERVAS</span>
-                            <span class="brand-title-short">RESERVAS</span>
+                            <BrandName class="brand-title-full" />
+                            <span class="brand-title-short">{{ brandStore.name }}</span>
+                            <span v-if="brandStore.tagline" class="brand-tagline gt-sm">{{ brandStore.tagline }}</span>
                         </q-toolbar-title>
                     </div>
                 </div>
@@ -158,8 +159,10 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRoute, useRouter } from 'vue-router'
 import EssentialLink from 'src/components/EssentialLink.vue'
+import BrandName from 'src/components/brand/BrandName.vue'
 import NotificacionesDrawer from 'src/components/notificaciones/NotificacionesDrawer.vue'
 import { useAuthStore } from 'src/stores/auth-store'
+import { useBrandStore } from 'src/stores/brand-store'
 import { useEmpresaStore } from 'src/stores/empresa-store'
 import { useNotificacionesStore } from 'src/stores/notificaciones-store'
 import { useProyectoStore } from 'src/stores/proyecto-store'
@@ -181,6 +184,7 @@ const authStore = useAuthStore()
 const empresaStore = useEmpresaStore()
 const proyectoStore = useProyectoStore()
 const themeStore = useThemeStore()
+const brandStore = useBrandStore()
 const notificacionesStore = useNotificacionesStore()
 const { casaFilterOptions } = useProyectoContext()
 
@@ -307,6 +311,16 @@ async function handleLogout() {
     background-attachment: fixed;
 }
 
+:global(body.body--dark) .app-layout,
+:global(html.app-dark) .app-layout {
+    background: var(--theme-dark-page, #1a1214) !important;
+}
+
+:global(body.body--dark) .page-container,
+:global(html.app-dark) .page-container {
+    background: var(--theme-dark-page, #1a1214) !important;
+}
+
 .drawer-credit {
     position: relative;
     z-index: 1;
@@ -336,10 +350,10 @@ async function handleLogout() {
 
 .app-header {
     min-height: 58px;
-    background: var(--app-shell-bg-header) !important;
+    background: var(--app-header-bg, var(--app-shell-bg-header)) !important;
     backdrop-filter: blur(12px) saturate(140%);
-    box-shadow: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 6px 24px rgba(var(--theme-wine-deep-rgb), 0.25);
+    border-bottom: 2px solid var(--theme-gold-light) !important;
     color: var(--app-shell-ink) !important;
 }
 
@@ -366,31 +380,53 @@ async function handleLogout() {
     min-width: 0;
 }
 
-.brand-mark {
-    width: 10px;
-    height: 28px;
-    border-radius: 6px;
+.brand-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #0a0a0a;
+    border: 1.5px solid var(--theme-gold-light);
+    box-shadow: 0 0 0 3px rgba(var(--theme-gold-light-rgb), 0.18), 0 4px 12px rgba(0, 0, 0, 0.25);
     flex-shrink: 0;
-    background: linear-gradient(180deg, #99f6e4 0%, #5eead4 45%, #14b8a6 100%);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
 }
 
 .brand-title {
     padding: 0;
+    font-family: var(--app-font-display);
     font-size: 13px !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.04em;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em;
     color: var(--app-shell-ink) !important;
-    line-height: 1.25;
+    line-height: 1.2;
     max-width: min(420px, 36vw);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.brand-title-full {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-shadow: none;
 }
 
 .brand-title-short {
     display: none;
+}
+
+.brand-tagline {
+    font-family: var(--app-font);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--theme-gold-light);
+    opacity: 0.92;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .header-actions {
@@ -461,7 +497,7 @@ async function handleLogout() {
 
 .theme-toggle:hover,
 .notif-bell:hover {
-    border-color: rgba(15, 118, 110, 0.35);
+    border-color: rgba(var(--theme-wine-rgb), 0.35);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
@@ -481,7 +517,7 @@ async function handleLogout() {
 }
 
 .user-chip:hover {
-    border-color: rgba(15, 118, 110, 0.35);
+    border-color: rgba(var(--theme-wine-rgb), 0.35);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
@@ -496,7 +532,7 @@ async function handleLogout() {
 }
 
 .user-avatar {
-    box-shadow: 0 4px 10px rgba(15, 118, 110, 0.25);
+    box-shadow: 0 4px 10px rgba(var(--theme-wine-rgb), 0.25);
 }
 
 .page-container {
@@ -577,7 +613,7 @@ async function handleLogout() {
     overflow-x: hidden;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    scrollbar-color: #5eead4 rgba(15, 23, 42, 0.35);
+    scrollbar-color: var(--theme-gold-light) rgba(0, 0, 0, 0.25);
 }
 
 .drawer-scroll::-webkit-scrollbar {
@@ -585,19 +621,19 @@ async function handleLogout() {
 }
 
 .drawer-scroll::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.28);
+    background: rgba(0, 0, 0, 0.22);
     border-radius: 0;
 }
 
 .drawer-scroll::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #5eead4 0%, #14b8a6 50%, #0f766e 100%);
+    background: linear-gradient(180deg, var(--theme-gold-light) 0%, var(--theme-gold) 50%, var(--theme-wine) 100%);
     border-radius: 8px;
-    border: 2px solid rgba(15, 23, 42, 0.28);
+    border: 2px solid rgba(0, 0, 0, 0.22);
     min-height: 40px;
 }
 
 .drawer-scroll::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #99f6e4 0%, #5eead4 50%, #14b8a6 100%);
+    background: linear-gradient(180deg, var(--theme-gold-pale) 0%, var(--theme-gold-light) 50%, var(--theme-gold) 100%);
 }
 
 .drawer-scroll::-webkit-scrollbar-corner {
@@ -662,8 +698,9 @@ async function handleLogout() {
         display: none;
     }
 
-    .brand-mark {
-        height: 24px;
+    .brand-logo {
+        width: 32px;
+        height: 32px;
     }
 }
 
@@ -746,15 +783,16 @@ body.body--dark .header-select-menu,
 body.body--dark .header-select-menu .q-item,
 body.body--dark .header-select-menu .q-item__label,
 body.body--dark .header-select-menu .q-item__section {
-    color: #f1f5f9 !important;
-    background: #1e293b;
+    color: var(--app-ink, #f1e8dc) !important;
+    background: var(--theme-dark);
 }
 
-/* Shell: claro = verde Login; oscuro = slate (se distingue) */
+/* Shell: header wine + línea dorada (ambos modos) */
 .app-header.q-header,
 .q-header.app-header {
-    background: var(--app-shell-bg-header) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
+    background: var(--app-header-bg, var(--app-shell-bg-header)) !important;
+    box-shadow: 0 6px 24px rgba(var(--theme-wine-deep-rgb), 0.25);
+    border-bottom: 2px solid var(--theme-gold-light) !important;
     color: var(--app-shell-ink) !important;
 }
 
@@ -823,7 +861,7 @@ body.body--dark .header-select-menu .q-item__section {
 }
 
 body.body--dark .drawer-scroll {
-    scrollbar-color: #2dd4bf rgba(2, 6, 23, 0.55);
+    scrollbar-color: #d4af6a rgba(2, 6, 23, 0.55);
 }
 
 body.body--dark .drawer-scroll::-webkit-scrollbar-track {
@@ -831,7 +869,7 @@ body.body--dark .drawer-scroll::-webkit-scrollbar-track {
 }
 
 body.body--dark .drawer-scroll::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #2dd4bf 0%, #14b8a6 100%);
+    background: linear-gradient(180deg, #d4af6a 0%, #8e2a36 100%);
     border-color: rgba(2, 6, 23, 0.45);
 }
 </style>

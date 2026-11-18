@@ -1,74 +1,81 @@
 <template>
-    <div class="reset-page flex column flex-center q-pa-lg">
-        <q-card flat class="reset-card no-accent-bar">
-            <q-card-section>
-                <div class="reset-eyebrow">Recuperar acceso</div>
-                <div class="reset-title">Crear nueva contraseña</div>
-                <div class="reset-subtitle">
-                    Define una contraseña nueva para volver a entrar al sistema.
+    <AuthScene centered>
+        <section class="reset-card lux-card lux-card--stripe lux-enter">
+            <header class="reset-head">
+                <div class="reset-icon" aria-hidden="true">
+                    <q-icon name="key" size="22px" />
                 </div>
-            </q-card-section>
+                <div class="lux-label">Recuperar acceso</div>
+                <h1 class="lux-title">Una llave <em>nueva</em></h1>
+                <p class="lux-text">Define una contraseña nueva para volver a entrar al sistema.</p>
+            </header>
 
-            <q-card-section>
-                <q-form class="column q-gutter-md" @submit="resetPassword">
-                    <q-input
-                        v-model="form.password"
-                        outlined
-                        :type="showPassword ? 'text' : 'password'"
-                        label="Nueva contraseña"
-                        autocomplete="new-password"
-                        hint="Mínimo 8 caracteres"
-                        :disable="submitting"
-                        :error="Boolean(errorMessage)"
-                        :error-message="errorMessage"
-                        :rules="passwordRules"
-                    >
-                        <template #prepend>
-                            <q-icon name="lock_outline" />
-                        </template>
-                        <template #append>
-                            <q-icon
-                                :name="showPassword ? 'visibility_off' : 'visibility'"
-                                class="cursor-pointer"
-                                @click="showPassword = !showPassword"
-                            />
-                        </template>
-                    </q-input>
-                    <q-input
-                        v-model="form.password_confirmation"
-                        outlined
-                        :type="showConfirmation ? 'text' : 'password'"
-                        label="Confirmar contraseña"
-                        autocomplete="new-password"
-                        :disable="submitting"
-                        :rules="confirmationRules"
-                    >
-                        <template #prepend>
-                            <q-icon name="lock_reset" />
-                        </template>
-                        <template #append>
-                            <q-icon
-                                :name="showConfirmation ? 'visibility_off' : 'visibility'"
-                                class="cursor-pointer"
-                                @click="showConfirmation = !showConfirmation"
-                            />
-                        </template>
-                    </q-input>
-                    <q-btn
-                        unelevated
-                        color="primary"
-                        type="submit"
-                        label="Guardar contraseña"
-                        :loading="submitting"
-                        class="reset-submit"
-                        size="lg"
-                    />
-                    <q-btn flat no-caps color="primary" label="Volver al inicio de sesión" @click="goToLogin" />
-                </q-form>
-            </q-card-section>
-        </q-card>
-        <div class="reset-footer">Sistema desarrollado por <strong>DoubLe Team</strong> · © 2026 Todos los derechos reservados.</div>
-    </div>
+            <q-form class="reset-form" @submit="resetPassword">
+                <q-input
+                    v-model="form.password"
+                    dark
+                    :type="showPassword ? 'text' : 'password'"
+                    label="Nueva contraseña"
+                    autocomplete="new-password"
+                    hint="Mínimo 8 caracteres"
+                    class="lux-field"
+                    :disable="submitting"
+                    :error="Boolean(errorMessage)"
+                    :error-message="errorMessage"
+                    :rules="passwordRules"
+                >
+                    <template #prepend>
+                        <q-icon name="lock_outline" size="20px" />
+                    </template>
+                    <template #append>
+                        <q-icon
+                            :name="showPassword ? 'visibility_off' : 'visibility'"
+                            size="20px"
+                            class="cursor-pointer"
+                            @click="showPassword = !showPassword"
+                        />
+                    </template>
+                </q-input>
+                <q-input
+                    v-model="form.password_confirmation"
+                    dark
+                    :type="showConfirmation ? 'text' : 'password'"
+                    label="Confirmar contraseña"
+                    autocomplete="new-password"
+                    class="lux-field"
+                    :disable="submitting"
+                    :rules="confirmationRules"
+                >
+                    <template #prepend>
+                        <q-icon name="lock_reset" size="20px" />
+                    </template>
+                    <template #append>
+                        <q-icon
+                            :name="showConfirmation ? 'visibility_off' : 'visibility'"
+                            size="20px"
+                            class="cursor-pointer"
+                            @click="showConfirmation = !showConfirmation"
+                        />
+                    </template>
+                </q-input>
+
+                <q-btn
+                    unelevated
+                    no-caps
+                    type="submit"
+                    :loading="submitting"
+                    class="lux-btn full-width reset-submit"
+                >
+                    <span>Guardar contraseña</span>
+                    <q-icon name="check" size="18px" class="q-ml-sm" />
+                </q-btn>
+            </q-form>
+
+            <div class="text-center q-mt-md">
+                <button type="button" class="lux-link" @click="goToLogin">Volver al inicio de sesión</button>
+            </div>
+        </section>
+    </AuthScene>
 </template>
 
 <script setup>
@@ -76,6 +83,7 @@ import { reactive, ref } from 'vue'
 import { Notify } from 'quasar'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from 'src/boot/axios'
+import AuthScene from 'src/components/brand/AuthScene.vue'
 
 defineOptions({
     name: 'ResetPasswordPage'
@@ -142,54 +150,44 @@ async function resetPassword() {
 </script>
 
 <style scoped>
-.reset-page {
-    min-height: 100vh;
-    background: var(--app-auth-bg);
-}
-
 .reset-card {
-    width: min(480px, 100%);
-    border-radius: 24px;
-    padding: 1rem 0.5rem;
-    background: var(--app-surface);
-    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.28) !important;
-    animation: fadeRise 0.5s ease both;
+    width: min(460px, 100%);
+    padding: 2rem 2rem 2.6rem;
 }
 
-.reset-eyebrow {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--app-primary);
-    margin-bottom: 0.35rem;
+.reset-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
 }
 
-.reset-title {
-    font-family: var(--app-font-display);
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: var(--app-ink);
-    letter-spacing: -0.02em;
+.reset-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--theme-ink);
+    background: linear-gradient(135deg, var(--theme-gold-pale), var(--lx-gold) 45%, var(--theme-gold));
+    box-shadow: 0 0 0 4px rgba(var(--lx-gold-rgb), 0.14), 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
-.reset-subtitle {
-    margin-top: 0.4rem;
-    font-size: 0.92rem;
-    color: var(--app-ink-muted);
+.reset-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
 .reset-submit {
-    min-height: 50px;
-    font-weight: 700;
-    border-radius: 14px;
+    margin-top: 1.1rem;
 }
 
-.reset-footer {
-    margin-top: 1.25rem;
-    text-align: center;
-    font-size: 11px;
-    color: rgba(236, 253, 245, 0.55);
-    letter-spacing: 0.04em;
+@media (max-width: 520px) {
+    .reset-card {
+        padding: 1.5rem 1.25rem 2.3rem;
+    }
 }
 </style>

@@ -38,7 +38,7 @@
         <q-table
             flat
             bordered
-            class="surface-card"
+            class="surface-card theme-table"
             row-key="id"
             :rows="reservas"
             :columns="columns"
@@ -124,210 +124,255 @@
                     <q-btn flat round dense icon="close" v-close-popup />
                 </q-card-section>
 
-                <q-card-section class="q-pt-sm q-pb-none">
+                <q-card-section class="q-pt-md q-pb-none">
                     <div class="reserva-layout">
                         <section class="reserva-pane">
                             <div class="reserva-pane-title">Estancia</div>
-                            <div class="row q-col-gutter-sm">
-                                <div class="col-12">
-                                    <q-select
-                                        v-model="form.habitacion_id"
-                                        :options="habitacionOptions"
-                                        emit-value
-                                        map-options
-                                        outlined
-                                        dense
-                                        label="Habitación *"
-                                        hide-bottom-space
-                                        @update:model-value="onHabitacionChange"
-                                    />
-                                </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model="form.fecha_entrada"
-                                        outlined
-                                        dense
-                                        label="Entrada *"
-                                        mask="####-##-##"
-                                        hide-bottom-space
-                                        @update:model-value="onStayChange"
-                                    >
-                                        <template #append>
-                                            <q-icon name="event" class="cursor-pointer">
-                                                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                                                    <q-date
-                                                        v-model="form.fecha_entrada"
-                                                        mask="YYYY-MM-DD"
-                                                        @update:model-value="onStayChange"
-                                                    >
-                                                        <div class="row items-center justify-end">
-                                                            <q-btn v-close-popup label="Cerrar" color="primary" flat />
-                                                        </div>
-                                                    </q-date>
-                                                </q-popup-proxy>
-                                            </q-icon>
-                                        </template>
-                                    </q-input>
-                                </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model.number="form.cantidad_noches"
-                                        outlined
-                                        dense
-                                        type="number"
-                                        min="1"
-                                        label="Noches *"
-                                        hide-bottom-space
-                                        @update:model-value="onStayChange"
-                                    />
-                                </div>
-                                <div class="col-4">
-                                    <q-input
-                                        :model-value="fechaSalidaCalculada"
-                                        outlined
-                                        dense
-                                        label="Salida"
-                                        readonly
-                                        hide-bottom-space
-                                    />
-                                </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model.number="form.cantidad_personas"
-                                        outlined
-                                        dense
-                                        type="number"
-                                        min="1"
-                                        label="Personas *"
-                                        hide-bottom-space
-                                        @update:model-value="onPersonasChange"
-                                    />
-                                </div>
-                                <div class="col-8 flex items-center">
-                                    <div class="text-caption text-grey-7">
-                                        Camas * · {{ plazasCamas }} plazas / {{ form.cantidad_personas || 0 }} pers.
+
+                            <div class="reserva-block">
+                                <q-select
+                                    v-model="form.habitacion_id"
+                                    :options="habitacionOptions"
+                                    emit-value
+                                    map-options
+                                    outlined
+                                    dense
+                                    label="Habitación *"
+                                    hide-bottom-space
+                                    @update:model-value="onHabitacionChange"
+                                />
+                            </div>
+
+                            <div class="reserva-block">
+                                <div class="reserva-block-label">Fechas</div>
+                                <div class="row q-col-gutter-md">
+                                    <div class="col-12 col-sm-5">
+                                        <q-input
+                                            v-model="form.fecha_entrada"
+                                            outlined
+                                            dense
+                                            label="Entrada *"
+                                            mask="####-##-##"
+                                            hide-bottom-space
+                                            @update:model-value="onStayChange"
+                                        >
+                                            <template #append>
+                                                <q-icon name="event" class="cursor-pointer">
+                                                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                                                        <q-date
+                                                            v-model="form.fecha_entrada"
+                                                            mask="YYYY-MM-DD"
+                                                            @update:model-value="onStayChange"
+                                                        >
+                                                            <div class="row items-center justify-end">
+                                                                <q-btn v-close-popup label="Cerrar" color="primary" flat />
+                                                            </div>
+                                                        </q-date>
+                                                    </q-popup-proxy>
+                                                </q-icon>
+                                            </template>
+                                        </q-input>
+                                    </div>
+                                    <div class="col-5 col-sm-3">
+                                        <q-input
+                                            v-model.number="form.cantidad_noches"
+                                            outlined
+                                            dense
+                                            type="number"
+                                            min="1"
+                                            label="Noches *"
+                                            hide-bottom-space
+                                            @update:model-value="onStayChange"
+                                        />
+                                    </div>
+                                    <div class="col-7 col-sm-4">
+                                        <div class="reserva-salida">
+                                            <div class="reserva-salida-label">Salida</div>
+                                            <div class="reserva-salida-value">{{ fechaSalidaCalculada || '—' }}</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model.number="form.camas.matrimonial"
-                                        outlined
-                                        dense
-                                        type="number"
-                                        min="0"
-                                        label="Matrimonial"
-                                        hide-bottom-space
-                                    />
+                            </div>
+
+                            <div class="reserva-block">
+                                <div class="reserva-block-label">Ocupación</div>
+                                <div class="row q-col-gutter-md items-end">
+                                    <div class="col-5 col-sm-4">
+                                        <q-input
+                                            v-model.number="form.cantidad_personas"
+                                            outlined
+                                            dense
+                                            type="number"
+                                            min="1"
+                                            label="Personas *"
+                                            hide-bottom-space
+                                            @update:model-value="onPersonasChange"
+                                        />
+                                    </div>
+                                    <div class="col-7 col-sm-8">
+                                        <div class="reserva-camas-meta">
+                                            Camas * · <strong>{{ plazasCamas }}</strong> plazas /
+                                            <strong>{{ form.cantidad_personas || 0 }}</strong> pers.
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <q-input
+                                            v-model.number="form.camas.matrimonial"
+                                            outlined
+                                            dense
+                                            type="number"
+                                            min="0"
+                                            label="Matrimonial"
+                                            hide-bottom-space
+                                        />
+                                    </div>
+                                    <div class="col-4">
+                                        <q-input
+                                            v-model.number="form.camas.twin"
+                                            outlined
+                                            dense
+                                            type="number"
+                                            min="0"
+                                            label="Twin"
+                                            hide-bottom-space
+                                        />
+                                    </div>
+                                    <div class="col-4">
+                                        <q-input
+                                            v-model.number="form.camas.single"
+                                            outlined
+                                            dense
+                                            type="number"
+                                            min="0"
+                                            label="Single"
+                                            hide-bottom-space
+                                        />
+                                    </div>
                                 </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model.number="form.camas.twin"
-                                        outlined
-                                        dense
-                                        type="number"
-                                        min="0"
-                                        label="Twin"
-                                        hide-bottom-space
-                                    />
-                                </div>
-                                <div class="col-4">
-                                    <q-input
-                                        v-model.number="form.camas.single"
-                                        outlined
-                                        dense
-                                        type="number"
-                                        min="0"
-                                        label="Single"
-                                        hide-bottom-space
-                                    />
-                                </div>
-                                <template v-if="selectedHabitacionTipo === 'privada'">
-                                    <div class="col-12 text-caption text-grey-7">Género por persona *</div>
-                                    <div
-                                        v-for="(_, idx) in form.generos"
-                                        :key="`g-${idx}`"
-                                        class="col-6"
-                                    >
+                            </div>
+
+                            <div class="reserva-block reserva-block--last">
+                                <div class="reserva-block-label">Género</div>
+                                <div class="row q-col-gutter-md">
+                                    <template v-if="selectedHabitacionTipo === 'privada'">
+                                        <div
+                                            v-for="(_, idx) in form.generos"
+                                            :key="`g-${idx}`"
+                                            class="col-12 col-sm-6"
+                                        >
+                                            <q-select
+                                                v-model="form.generos[idx]"
+                                                :options="generoOptions"
+                                                emit-value
+                                                map-options
+                                                outlined
+                                                dense
+                                                :label="`Persona ${idx + 1} *`"
+                                                hide-bottom-space
+                                                @update:model-value="checkDisponibilidad"
+                                            />
+                                        </div>
+                                    </template>
+                                    <div v-else class="col-12 col-sm-6">
                                         <q-select
-                                            v-model="form.generos[idx]"
+                                            v-model="form.genero"
                                             :options="generoOptions"
                                             emit-value
                                             map-options
                                             outlined
                                             dense
-                                            :label="`Persona ${idx + 1}`"
+                                            label="Género *"
                                             hide-bottom-space
                                             @update:model-value="checkDisponibilidad"
                                         />
                                     </div>
-                                </template>
-                                <div v-else class="col-6">
-                                    <q-select
-                                        v-model="form.genero"
-                                        :options="generoOptions"
-                                        emit-value
-                                        map-options
-                                        outlined
-                                        dense
-                                        label="Género *"
-                                        hide-bottom-space
-                                        @update:model-value="checkDisponibilidad"
-                                    />
                                 </div>
                             </div>
                         </section>
 
                         <section class="reserva-pane">
                             <div class="reserva-pane-title">Cliente y llegada</div>
-                            <div class="row q-col-gutter-sm">
-                                <div class="col-12">
-                                    <q-input v-model="form.cliente_nombre" outlined dense label="Nombre del cliente *" hide-bottom-space />
-                                </div>
-                                <div class="col-12">
-                                    <q-input v-model="form.agencia" outlined dense label="Agencia" hide-bottom-space />
-                                </div>
-                                <div class="col-5">
-                                    <q-input v-model="form.hora_llegada" outlined dense label="Hora llegada" type="time" hide-bottom-space />
-                                </div>
-                                <div class="col-7">
-                                    <q-input v-model="form.vuelo" outlined dense label="Vuelo" hide-bottom-space />
-                                </div>
-                                <div class="col-6">
-                                    <q-toggle v-model="form.taxi_llegada" dense color="teal" label="Taxi llegada" />
-                                </div>
-                                <div class="col-6">
-                                    <q-toggle v-model="form.taxi_salida" dense color="teal" label="Taxi salida" />
-                                </div>
-                                <div class="col-12">
-                                    <q-input
-                                        v-model="form.notas"
-                                        outlined
-                                        dense
-                                        type="textarea"
-                                        :rows="2"
-                                        label="Notas"
-                                        hide-bottom-space
-                                    />
-                                </div>
-                                <div class="col-12">
-                                    <q-banner
-                                        v-if="disponibilidad"
-                                        dense
-                                        rounded
-                                        class="reserva-banner"
-                                        :class="disponibilidad.disponible ? 'bg-positive text-white' : 'bg-negative text-white'"
-                                    >
-                                        <template v-if="disponibilidad.disponible">
-                                            Disponible · Capacidad {{ disponibilidad.capacidad }} ·
-                                            Ocupado {{ disponibilidad.ocupado }} · Restante {{ disponibilidad.restante }}
-                                        </template>
-                                        <template v-else>
-                                            {{ disponibilidad.mensaje || 'Sin disponibilidad.' }}
-                                        </template>
-                                    </q-banner>
-                                    <div v-else class="reserva-banner-placeholder text-caption text-grey-6">
-                                        Complete habitación, fechas, personas y género para verificar disponibilidad.
+
+                            <div class="reserva-block">
+                                <div class="row q-col-gutter-md">
+                                    <div class="col-12">
+                                        <q-input v-model="form.cliente_nombre" outlined dense label="Nombre del cliente *" hide-bottom-space />
                                     </div>
+                                    <div class="col-12">
+                                        <q-input v-model="form.agencia" outlined dense label="Agencia" hide-bottom-space />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="reserva-block">
+                                <div class="reserva-block-label">Llegada</div>
+                                <div class="row q-col-gutter-md">
+                                    <div class="col-12 col-sm-5">
+                                        <q-input
+                                            v-model="form.hora_llegada"
+                                            outlined
+                                            dense
+                                            label="Hora llegada (24h)"
+                                            mask="##:##"
+                                            placeholder="HH:mm"
+                                            hide-bottom-space
+                                        >
+                                            <template #append>
+                                                <q-icon name="access_time" class="cursor-pointer">
+                                                    <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                                                        <q-time v-model="form.hora_llegada" format24h mask="HH:mm">
+                                                            <div class="row items-center justify-end">
+                                                                <q-btn v-close-popup label="Cerrar" color="primary" flat dense />
+                                                            </div>
+                                                        </q-time>
+                                                    </q-popup-proxy>
+                                                </q-icon>
+                                            </template>
+                                        </q-input>
+                                    </div>
+                                    <div class="col-12 col-sm-7">
+                                        <q-input v-model="form.vuelo" outlined dense label="Vuelo" hide-bottom-space />
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="reserva-toggles">
+                                            <q-toggle v-model="form.taxi_llegada" dense color="primary" label="Taxi llegada" />
+                                            <q-toggle v-model="form.taxi_salida" dense color="primary" label="Taxi salida" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="reserva-block">
+                                <q-input
+                                    v-model="form.notas"
+                                    outlined
+                                    dense
+                                    type="textarea"
+                                    :rows="3"
+                                    label="Notas"
+                                    hide-bottom-space
+                                    class="reserva-notas"
+                                />
+                            </div>
+
+                            <div class="reserva-block reserva-block--last">
+                                <q-banner
+                                    v-if="disponibilidad"
+                                    dense
+                                    rounded
+                                    class="reserva-banner"
+                                    :class="disponibilidad.disponible ? 'bg-positive text-white' : 'bg-negative text-white'"
+                                >
+                                    <template v-if="disponibilidad.disponible">
+                                        Disponible · Capacidad {{ disponibilidad.capacidad }} ·
+                                        Ocupado {{ disponibilidad.ocupado }} · Restante {{ disponibilidad.restante }}
+                                    </template>
+                                    <template v-else>
+                                        {{ disponibilidad.mensaje || 'Sin disponibilidad.' }}
+                                    </template>
+                                </q-banner>
+                                <div v-else class="reserva-banner-placeholder text-caption text-grey-6">
+                                    Complete habitación, fechas, personas y género para verificar disponibilidad.
                                 </div>
                             </div>
                         </section>
@@ -769,14 +814,17 @@ onMounted(async () => {
 
 <style scoped>
 .reserva-dialog {
-    width: min(1200px, 98vw);
-    max-width: 1200px;
+    width: min(1080px, 96vw);
+    max-width: 1080px;
+    border-radius: 22px !important;
+    border: 1px solid rgba(var(--theme-gold-light-rgb), 0.28) !important;
+    overflow: hidden;
 }
 
 .reserva-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 20px;
     align-items: stretch;
 }
 
@@ -785,23 +833,103 @@ onMounted(async () => {
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 12px 14px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 14px;
-    background: #f8fafc;
-}
-
-.reserva-pane > .row {
-    flex: 1;
+    gap: 4px;
+    padding: 18px 18px 16px;
+    border: 1px solid var(--app-border);
+    border-radius: 16px;
+    background:
+        radial-gradient(120% 80% at 0% 0%, rgba(var(--theme-wine-rgb), 0.06), transparent 55%),
+        var(--app-surface-muted);
 }
 
 .reserva-pane-title {
-    font-size: 12px;
-    font-weight: 700;
+    font-family: var(--app-font-display), Georgia, serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--theme-wine);
+    margin-bottom: 8px;
+}
+
+.reserva-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(var(--theme-gold-rgb), 0.12);
+}
+
+.reserva-block--last {
+    border-bottom: 0;
+    padding-bottom: 0;
+    margin-top: auto;
+}
+
+.reserva-block-label {
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--app-ink-muted);
+}
+
+.reserva-salida {
+    min-height: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    border: 1px dashed rgba(var(--theme-gold-rgb), 0.28);
+    background: rgba(var(--theme-wine-rgb), 0.04);
+}
+
+.reserva-salida-label {
+    font-size: 10px;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #0f766e;
-    margin-bottom: 10px;
+    color: var(--app-ink-muted);
+}
+
+.reserva-salida-value {
+    font-size: 0.95rem;
+    font-weight: 650;
+    color: var(--app-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.reserva-camas-meta {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(var(--theme-wine-rgb), 0.06);
+    border: 1px solid rgba(var(--theme-wine-rgb), 0.1);
+    color: var(--app-ink-muted);
+    font-size: 0.82rem;
+}
+
+.reserva-camas-meta strong {
+    color: var(--theme-wine);
+    font-weight: 700;
+}
+
+.reserva-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    min-height: 40px;
+    padding: 4px 2px;
+}
+
+.reserva-notas {
+    width: 100%;
 }
 
 .reserva-banner {
@@ -809,19 +937,20 @@ onMounted(async () => {
 }
 
 .reserva-banner-placeholder {
-    min-height: 40px;
+    min-height: 48px;
     display: flex;
     align-items: center;
-    padding: 8px 10px;
-    border-radius: 10px;
-    background: rgba(15, 23, 42, 0.03);
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(var(--theme-gold-rgb), 0.08);
+    line-height: 1.35;
 }
 
 .taxi-ok {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    color: #0f766e;
+    color: #7a1f2b;
     font-weight: 600;
 }
 
@@ -839,9 +968,108 @@ onMounted(async () => {
     gap: 2px;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
     .reserva-layout {
         grid-template-columns: 1fr;
     }
+}
+</style>
+
+<style>
+body.body--dark .reserva-dialog,
+body.app-dark .reserva-dialog {
+    background: var(--theme-dark) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.28) !important;
+}
+
+body.body--dark .reserva-pane,
+body.app-dark .reserva-pane {
+    background:
+        radial-gradient(120% 80% at 0% 0%, rgba(var(--theme-wine-rgb), 0.18), transparent 55%),
+        var(--theme-dark-page) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.16) !important;
+}
+
+body.body--dark .reserva-pane-title,
+body.app-dark .reserva-pane-title {
+    color: var(--theme-gold-light) !important;
+}
+
+body.body--dark .reserva-block,
+body.app-dark .reserva-block {
+    border-bottom-color: rgba(var(--theme-gold-light-rgb), 0.1) !important;
+}
+
+body.body--dark .reserva-block-label,
+body.app-dark .reserva-block-label {
+    color: rgba(var(--theme-gold-pale-rgb, 239, 224, 191), 0.72) !important;
+}
+
+body.body--dark .reserva-salida,
+body.app-dark .reserva-salida {
+    background: rgba(var(--theme-wine-rgb), 0.14) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.22) !important;
+}
+
+body.body--dark .reserva-salida-value,
+body.app-dark .reserva-salida-value {
+    color: var(--theme-gold-pale) !important;
+}
+
+body.body--dark .reserva-camas-meta,
+body.app-dark .reserva-camas-meta {
+    background: rgba(var(--theme-wine-rgb), 0.16) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.14) !important;
+    color: var(--app-ink-muted, #b3a597) !important;
+}
+
+body.body--dark .reserva-camas-meta strong,
+body.app-dark .reserva-camas-meta strong {
+    color: var(--theme-gold-pale) !important;
+}
+
+body.body--dark .reserva-banner-placeholder,
+body.app-dark .reserva-banner-placeholder {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: var(--app-ink-muted, #b3a597) !important;
+}
+
+/* Lista de reservas: forzar look vino/oro sobre .q-dark de Quasar */
+body.body--dark .theme-table.q-table__card,
+body.body--dark .theme-table.q-table__card--dark,
+body.body--dark .theme-table.q-dark,
+body.app-dark .theme-table.q-table__card,
+body.app-dark .theme-table.q-table__card--dark,
+html.app-dark .theme-table.q-table__card {
+    background:
+        radial-gradient(120% 90% at 0% 0%, rgba(var(--theme-wine-rgb), 0.2), transparent 50%),
+        color-mix(in srgb, var(--theme-dark) 90%, var(--theme-wine-deep)) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.24) !important;
+    color: var(--app-ink, #f1e8dc) !important;
+}
+
+body.body--dark .theme-table thead tr th,
+body.app-dark .theme-table thead tr th,
+html.app-dark .theme-table thead tr th {
+    background: linear-gradient(180deg, var(--theme-wine-deep) 0%, var(--theme-wine) 100%) !important;
+    color: var(--theme-gold-pale) !important;
+    border-bottom: 1px solid rgba(var(--theme-gold-light-rgb), 0.3) !important;
+}
+
+body.body--dark .theme-table .q-table__bottom,
+body.body--dark .theme-table .q-table__bottom--nodata,
+body.app-dark .theme-table .q-table__bottom,
+body.app-dark .theme-table .q-table__bottom--nodata,
+html.app-dark .theme-table .q-table__bottom--nodata {
+    background:
+        radial-gradient(120% 80% at 0% 0%, rgba(var(--theme-wine-rgb), 0.22), transparent 55%),
+        var(--theme-dark-page) !important;
+    color: var(--theme-gold-pale) !important;
+    border-top: 1px solid rgba(var(--theme-gold-light-rgb), 0.16) !important;
+}
+
+body.body--dark .theme-table .q-table__bottom--nodata .q-icon,
+body.app-dark .theme-table .q-table__bottom--nodata .q-icon {
+    color: var(--theme-gold-light) !important;
 }
 </style>

@@ -1,53 +1,60 @@
 <template>
-    <div class="not-found-page flex column flex-center q-pa-lg">
-        <q-card flat class="not-found-card text-center">
-            <div class="not-found-code">404</div>
-            <div class="not-found-title">Página no encontrada</div>
-            <p class="not-found-text">La dirección que buscas no existe o fue movida.</p>
-            <q-btn unelevated color="primary" icon="home" label="Volver al inicio" to="/" />
-        </q-card>
-    </div>
+    <AuthScene centered>
+        <section class="status-card lux-card lux-card--stripe lux-enter">
+            <div class="lux-label">Habitación no encontrada</div>
+            <div class="status-code">404</div>
+            <h1 class="lux-title status-title">Esta suite <em>no existe</em></h1>
+            <p class="lux-text status-text">La dirección que buscas no existe o fue movida.</p>
+
+            <div class="lux-rule status-rule"><span class="lux-diamond" /></div>
+
+            <q-btn unelevated no-caps class="lux-btn lux-btn--compact" to="/">
+                <q-icon name="home" size="18px" class="q-mr-sm" />
+                <span>Volver al inicio</span>
+            </q-btn>
+        </section>
+    </AuthScene>
 </template>
 
 <script setup>
+import AuthScene from 'src/components/brand/AuthScene.vue'
+
 defineOptions({
     name: 'ErrorNotFound'
 })
 </script>
 
 <style scoped>
-.not-found-page {
-    min-height: 100vh;
-    background: var(--app-auth-bg);
-}
-
-.not-found-card {
+.status-card {
     width: min(480px, 100%);
-    border-radius: 24px;
-    padding: 2.5rem 2rem;
-    background: var(--app-surface);
-    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.28) !important;
-    animation: fadeRise 0.45s ease both;
+    padding: 2.2rem 2rem 2.8rem;
+    text-align: center;
 }
 
-.not-found-code {
-    font-family: var(--app-font-display);
-    font-size: 4.5rem;
-    font-weight: 700;
+.status-code {
+    margin: 0.4rem 0 0.2rem;
+    font-family: var(--app-font-display), Georgia, serif;
+    font-style: italic;
+    font-size: clamp(4.5rem, 10vw, 6.5rem);
+    font-weight: 500;
     line-height: 1;
-    color: var(--app-primary);
+    background: linear-gradient(100deg, var(--theme-gold-pale), var(--lx-gold) 40%, var(--theme-gold) 70%, var(--theme-gold-pale));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 
-.not-found-title {
-    margin-top: 0.75rem;
-    font-family: var(--app-font-display);
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--app-ink);
+.status-title {
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
 }
 
-.not-found-text {
-    margin: 0.75rem auto 1.5rem;
-    color: var(--app-ink-muted);
+.status-text {
+    margin: 0.75rem auto 0;
+    max-width: 22rem;
+}
+
+.status-rule {
+    margin: 1.5rem auto 1.4rem;
+    max-width: 220px;
 }
 </style>

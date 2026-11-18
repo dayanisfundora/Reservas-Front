@@ -404,7 +404,7 @@ watch(
 }
 
 .menu-section-toggle--current {
-    box-shadow: inset 3px 0 0 #14b8a6;
+    box-shadow: inset 3px 0 0 var(--theme-gold-light);
 }
 
 .menu-section-toggle--mini {
@@ -451,10 +451,10 @@ watch(
 }
 
 .menu-item-active {
-    background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%) !important;
+    background: var(--app-sidebar-active) !important;
     color: #ffffff !important;
     font-weight: var(--menu-weight-l1);
-    box-shadow: 0 6px 16px rgba(15, 118, 110, 0.28);
+    box-shadow: inset 3px 0 0 var(--theme-gold-light), 0 6px 16px rgba(var(--theme-wine-rgb), 0.28);
 }
 
 .menu-item-active .q-icon,
@@ -609,7 +609,7 @@ watch(
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--app-menu-section-title, #5eead4);
+    color: var(--app-menu-section-title, #d4af6a);
     padding: 8px 12px 4px;
 }
 
