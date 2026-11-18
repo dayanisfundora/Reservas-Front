@@ -44,7 +44,7 @@
                 <q-td :props="props">
                     <span
                         class="color-swatch"
-                        :style="{ background: props.row.color || '#0f766e' }"
+                        :style="{ background: props.row.color || '#7a1f2b' }"
                         :title="props.row.color"
                     />
                 </q-td>
@@ -170,7 +170,7 @@ const form = reactive({
     codigo: '',
     tipo: 'privada',
     capacidad: 1,
-    color: '#0f766e',
+    color: '#7a1f2b',
     activo: true,
     descripcion: ''
 })
@@ -181,7 +181,7 @@ const tipoOptions = [
 ]
 
 const colorPalette = [
-    '#0f766e',
+    '#7a1f2b',
     '#1d4ed8',
     '#7c3aed',
     '#db2777',

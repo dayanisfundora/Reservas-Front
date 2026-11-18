@@ -23,6 +23,7 @@ const routes = [
       { path: 'perfil', name: 'EditarPerfil', component: () => import('pages/auth/EditarPerfilPage.vue'), meta: { requiresAuth: true } },
       { path: 'usuarios', name: 'GestionUsuarios', component: () => import('pages/admin/GestionUsuariosPage.vue'), meta: { requiresAuth: true, permissions: ['ver_usuarios'] } },
       { path: 'respaldo-bd', name: 'BackupBd', component: () => import('pages/admin/BackupBdPage.vue'), meta: { requiresAuth: true, permissions: ['respaldar_bd'] } },
+      { path: 'identidad', name: 'Identidad', component: () => import('pages/admin/IdentidadPage.vue'), meta: { requiresAuth: true, permissions: ['gestionar_identidad'] } },
     ],
   },
   { path: '/:catchAll(.*)*', component: () => import('pages/ErrorNotFound.vue') },

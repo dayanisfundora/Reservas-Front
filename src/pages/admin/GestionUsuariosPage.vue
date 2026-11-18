@@ -692,9 +692,9 @@ onMounted(loadAdminData)
     border-radius: 22px;
     background:
         radial-gradient(circle at 90% 10%, rgba(217, 119, 6, 0.28), transparent 40%),
-        linear-gradient(135deg, #0f172a 0%, #0f766e 55%, #0d9488 100%);
+        linear-gradient(135deg, #0f172a 0%, #7a1f2b 55%, #8e2a36 100%);
     color: white;
-    box-shadow: 0 24px 50px rgba(15, 118, 110, 0.22);
+    box-shadow: 0 24px 50px rgba(var(--theme-wine-rgb), 0.22);
 }
 
 .admin-eyebrow {
@@ -757,7 +757,7 @@ onMounted(loadAdminData)
 }
 
 .user-card:hover {
-    border-color: rgba(15, 118, 110, 0.3);
+    border-color: rgba(var(--theme-wine-rgb), 0.3);
     box-shadow: var(--app-shadow-sm);
 }
 
@@ -770,7 +770,7 @@ onMounted(loadAdminData)
     font-size: 0.9rem;
     font-weight: 700;
     color: #fff;
-    background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+    background: linear-gradient(135deg, #7a1f2b 0%, #8e2a36 100%);
 }
 
 .user-meta {

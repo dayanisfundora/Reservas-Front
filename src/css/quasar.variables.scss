@@ -1,12 +1,74 @@
-// Quasar SCSS Variables — Impuestos premium identity
-$primary: #0f766e;
-$secondary: #475569;
-$accent: #d97706;
+// Quasar SCSS (& Sass) Variables
+// --------------------------------------------------
+// The business palette is configurable at runtime (Configuración › Identidad).
+// Default theme: Rojo vino, primary #7a1f2b.
+// Brand colors are CSS variables set by src/assets/js/util/theme.js; the hex values
+// below are only the defaults used before the app boots.
 
-$dark: #0f172a;
-$dark-page: #f0f4f3;
+$theme-palette-defaults: (
+    'wine-deep': #4a111b,
+    'wine': #7a1f2b,
+    'wine-light': #8e2a36,
+    'ink': #2a1418,
+    'ink-2': #3b1a20,
+    'gold': #b8893b,
+    'gold-light': #d4af6a,
+    'gold-pale': #efe0bf,
+    'ivory': #faf6f0,
+    'ivory-2': #f3ece1,
+    'dark': #241a1c,
+    'dark-page': #1a1214,
+    'gold-bright': #e6c88a,
+    'wine-on-dark': #e8a5ae,
+    'header-dark-1': #2a0d13,
+    'header-dark-3': #5c1923,
+);
 
-$positive: #159947;
-$negative: #c62828;
-$info: #0e7490;
-$warning: #d97706;
+// Quasar brand colors must stay literal for Quasar's own Sass; runtime values come from setCssVar
+$primary: #7a1f2b;
+$secondary: #b8893b;
+$accent: #d4af6a;
+
+$dark: #241a1c;
+$dark-page: #1a1214;
+
+$positive: #2e7d5b;
+$negative: #b3261e;
+$info: #3d6e8c;
+$warning: #e0a526;
+
+// Theme — runtime (CSS variables). Never pass these to Sass color functions; use theme-a() for alpha.
+$theme-wine-deep: var(--theme-wine-deep);
+$theme-wine: var(--theme-wine);
+$theme-wine-light: var(--theme-wine-light);
+$theme-ink: var(--theme-ink);
+$theme-ink-2: var(--theme-ink-2);
+
+$theme-gold: var(--theme-gold);
+$theme-gold-light: var(--theme-gold-light);
+$theme-gold-pale: var(--theme-gold-pale);
+$theme-gold-bright: var(--theme-gold-bright);
+
+$theme-ivory: var(--theme-ivory);
+$theme-ivory-2: var(--theme-ivory-2);
+$theme-dark: var(--theme-dark);
+$theme-dark-page: var(--theme-dark-page);
+
+$theme-silver: #c8c4c0;
+
+// Spectrum accents/charts only (not configurable)
+$theme-violet: #6b2d8b;
+$theme-blue: #2f6fbf;
+$theme-teal: #1aa6a0;
+$theme-emerald: #2e9b4a;
+$theme-yellow: #e6c20f;
+$theme-orange: #e67a22;
+$theme-flame: #c4392a;
+
+$theme-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+$theme-sans: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+/// Theme color with alpha, e.g. theme-a(gold-light, 0.3)
+@function theme-a($name, $alpha) {
+    @return rgba(var(--theme-#{$name}-rgb), $alpha);
+}

@@ -1,0 +1,250 @@
+// ── Kit "lux": piezas compartidas por login y pantallas de paso (fondo fotográfico oscuro) ──
+
+:root {
+    --lx-gold: var(--theme-gold-light);
+    --lx-gold-rgb: var(--theme-gold-light-rgb);
+    --lx-text: #f7efe3;
+    --lx-muted: rgba(247, 239, 227, 0.66);
+}
+
+.lux-card {
+    position: relative;
+    overflow: hidden;
+    padding: 1.6rem 1.75rem 2.4rem;
+    border-radius: 26px;
+    color: var(--lx-text);
+    background:
+        radial-gradient(120% 80% at 0% 0%, rgba(var(--theme-wine-rgb), 0.55), transparent 60%),
+        linear-gradient(160deg, rgba(var(--theme-ink-2-rgb), 0.82) 0%, rgba(var(--theme-ink-rgb), 0.9) 100%);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    border: 1px solid rgba(var(--lx-gold-rgb), 0.38);
+    box-shadow:
+        0 40px 80px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.lux-card--stripe::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 10px;
+    background: linear-gradient(90deg,
+        var(--theme-wine-deep),
+        var(--theme-wine) 30%,
+        var(--lx-gold) 50%,
+        var(--theme-wine) 70%,
+        var(--theme-wine-deep));
+    opacity: 0.9;
+}
+
+.lux-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--lx-gold);
+}
+
+.lux-title {
+    margin: 0;
+    font-family: var(--app-font-display), Georgia, serif;
+    font-size: 1.85rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+    color: #fff;
+}
+
+.lux-title em {
+    font-style: italic;
+    color: var(--lx-gold);
+}
+
+.lux-text {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--lx-muted);
+}
+
+// Campos subrayados (usar con q-input dark)
+.lux-field .q-field__control {
+    height: 54px;
+    background: transparent;
+}
+
+.lux-field .q-field__control:before {
+    border-bottom: 1px solid rgba(var(--lx-gold-rgb), 0.3) !important;
+}
+
+.lux-field .q-field__control:after {
+    height: 1px;
+    background: linear-gradient(90deg, var(--lx-gold), var(--theme-gold-pale), var(--lx-gold));
+}
+
+.lux-field .q-field__native {
+    color: #fff !important;
+    font-size: 0.98rem;
+    letter-spacing: 0.01em;
+}
+
+.lux-field .q-field__label {
+    color: rgba(247, 239, 227, 0.6) !important;
+    letter-spacing: 0.02em;
+}
+
+.lux-field.q-field--focused .q-field__label,
+.lux-field.q-field--float .q-field__label {
+    color: var(--lx-gold) !important;
+}
+
+.lux-field .q-field__prepend .q-icon,
+.lux-field .q-field__append .q-icon {
+    color: rgba(var(--lx-gold-rgb), 0.8);
+}
+
+.lux-field .q-field__bottom {
+    color: rgba(247, 239, 227, 0.55);
+}
+
+.lux-field input:-webkit-autofill {
+    -webkit-text-fill-color: #fff;
+    -webkit-box-shadow: 0 0 0 1000px transparent inset;
+    transition: background-color 9999s ease-out;
+}
+
+// Botón dorado tipo lámina
+.lux-btn {
+    position: relative;
+    overflow: hidden;
+    min-height: 52px;
+    border-radius: 999px !important;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    color: var(--theme-ink) !important;
+    background: linear-gradient(110deg,
+        var(--theme-gold) 0%,
+        var(--lx-gold) 30%,
+        var(--theme-gold-pale) 50%,
+        var(--lx-gold) 70%,
+        var(--theme-gold) 100%) !important;
+    background-size: 220% 100% !important;
+    box-shadow: 0 14px 34px rgba(var(--lx-gold-rgb), 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: background-position 0.7s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.lux-btn:hover {
+    background-position: 100% 0 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 18px 40px rgba(var(--lx-gold-rgb), 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.lux-btn--compact {
+    min-height: 42px;
+    padding: 0 1.3rem;
+    letter-spacing: 0.12em;
+}
+
+// Botón secundario: contorno dorado
+.lux-btn-ghost {
+    min-height: 42px;
+    border-radius: 999px !important;
+    padding: 0 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgba(247, 239, 227, 0.85) !important;
+    border: 1px solid rgba(var(--lx-gold-rgb), 0.4);
+    background: rgba(0, 0, 0, 0.15) !important;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.lux-btn-ghost:hover {
+    color: var(--lx-gold) !important;
+    border-color: var(--lx-gold);
+    background: rgba(var(--lx-gold-rgb), 0.08) !important;
+}
+
+.lux-link {
+    display: inline-block;
+    padding: 2px 0;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.82rem;
+    color: rgba(247, 239, 227, 0.7);
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.lux-link:hover,
+.lux-link:focus-visible {
+    color: var(--lx-gold);
+    border-bottom-color: rgba(var(--lx-gold-rgb), 0.6);
+    outline: none;
+}
+
+.lux-rule {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--lx-gold);
+}
+
+.lux-rule::before,
+.lux-rule::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--lx-gold-rgb), 0.55), transparent);
+}
+
+.lux-diamond {
+    width: 6px;
+    height: 6px;
+    background: var(--lx-gold);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+}
+
+.lux-dialog {
+    width: min(440px, 92vw);
+    border-radius: 22px !important;
+    border: 1px solid rgba(var(--lx-gold-rgb), 0.32) !important;
+    background:
+        radial-gradient(120% 80% at 0% 0%, rgba(var(--theme-wine-rgb), 0.45), transparent 60%),
+        var(--theme-ink) !important;
+    color: #f1e8dc !important;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55) !important;
+}
+
+.lux-enter {
+    animation: lx-card-in 1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s both;
+}
+
+@keyframes lx-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes lx-rise {
+    from { opacity: 0; transform: translateY(26px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lx-card-in {
+    from { opacity: 0; transform: perspective(1400px) translateY(40px) rotateX(14deg) rotateY(-10deg); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lux-enter {
+        animation: lx-fade-in 0.3s ease both;
+    }
+}

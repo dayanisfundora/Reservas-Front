@@ -25,8 +25,10 @@ module.exports = configure(function (/* ctx */) {
             'axios',
             'notify',
             'theme',
+            'brand',
             'qcalendar',
         ],
+
 
         // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
         css: [

@@ -235,7 +235,7 @@ async function goToReserva(item) {
 
 .notif-group-label.is-vencida { color: #b91c1c; }
 .notif-group-label.is-en_breve { color: #c2410c; }
-.notif-group-label.is-hoy { color: #0f766e; }
+.notif-group-label.is-hoy { color: #7a1f2b; }
 .notif-group-label.is-manana { color: #64748b; }
 
 .notif-card {

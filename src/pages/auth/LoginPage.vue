@@ -1,103 +1,81 @@
 <template>
-    <div class="login-page flex column flex-center q-pa-lg">
-        <q-btn
-            flat
-            round
-            class="auth-theme-toggle"
-            :icon="themeStore.dark ? 'light_mode' : 'dark_mode'"
-            @click="themeStore.toggle()"
-        >
-            <q-tooltip>{{ themeStore.dark ? 'Modo claro' : 'Modo oscuro' }}</q-tooltip>
-        </q-btn>
-
-        <div class="login-orb login-orb--one" aria-hidden="true" />
-        <div class="login-orb login-orb--two" aria-hidden="true" />
-
-        <div class="login-shell row items-stretch">
-            <section class="login-copy column justify-between">
-                <div>
-                    <div class="login-brand">
-                        <div class="login-brand-icon">
-                            <!-- Misma cama del favicon.svg -->
-                            <svg class="login-brand-bed" viewBox="10 18 44 32" aria-hidden="true">
-                                <rect x="10" y="18" width="5" height="32" rx="2" fill="currentColor"/>
-                                <rect x="15" y="34" width="39" height="9" rx="2" fill="currentColor"/>
-                                <rect x="49" y="34" width="5" height="16" rx="2" fill="currentColor"/>
-                                <rect x="18" y="26" width="11" height="7" rx="3" fill="currentColor"/>
-                                <path d="M31 26h17a6 6 0 0 1 6 6v2H31z" fill="currentColor"/>
-                            </svg>
-                        </div>
-                        <span class="login-brand-name">Reservas</span>
-                    </div>
-
-                    <p class="eyebrow">Gestión de alojamiento</p>
-                    <h1 class="login-title">Controla la ocupación de tus casas y habitaciones.</h1>
-                    <p class="login-text">
-                        Inicia sesión para registrar reservas, consultar la disponibilidad y planificar las estancias.
-                    </p>
-                </div>
-
-                <div class="login-points">
-                    <div class="login-point">
-                        <div class="login-point-icon"><q-icon name="event_available" size="16px" /></div>
-                        <span>Reservas privadas y compartidas con control de disponibilidad</span>
-                    </div>
-                    <div class="login-point">
-                        <div class="login-point-icon"><q-icon name="calendar_month" size="16px" /></div>
-                        <span>Calendario visual de ocupación por habitación</span>
-                    </div>
-                    <div class="login-point">
-                        <div class="login-point-icon"><q-icon name="picture_as_pdf" size="16px" /></div>
-                        <span>Exportación del calendario a PDF</span>
-                    </div>
-                </div>
+    <AuthScene>
+        <div class="login-stage">
+            <section class="login-hero">
+                <p class="hero-eyebrow">
+                    <span class="hero-rule" />
+                    Bienvenido a casa
+                </p>
+                <h1 class="hero-title">
+                    Cada estancia,
+                    <em>una experiencia.</em>
+                </h1>
+                <p class="hero-text">
+                    Reservas, disponibilidad y calendario de tus casas y habitaciones, con la elegancia que merece tu hospedaje.
+                </p>
+                <ul class="hero-features">
+                    <li>Reservas</li>
+                    <li>Disponibilidad</li>
+                    <li>Calendario</li>
+                </ul>
             </section>
 
-            <q-card flat class="login-card no-accent-bar">
-                <q-card-section class="login-card-head">
-                    <div class="login-avatar">
-                        <q-icon name="lock_open" size="20px" />
-                    </div>
-                    <div class="login-card-eyebrow">Acceso seguro</div>
-                    <div class="login-card-title">Bienvenido</div>
-                    <div class="login-card-subtitle">Ingresa tus credenciales para continuar.</div>
-                </q-card-section>
+            <section class="keycard-wrap">
+                <div class="keycard-shadow" aria-hidden="true" />
+                <div class="keycard-back" aria-hidden="true">
+                    <span class="keycard-back-mark">{{ brandInitial }}</span>
+                </div>
 
-                <q-card-section>
-                    <q-form class="column q-gutter-sm" @submit="submitLogin">
+                <div class="keycard lux-card lux-card--stripe">
+                    <div class="keycard-sheen" aria-hidden="true" />
+
+                    <div class="keycard-head">
+                        <div class="keycard-chip" aria-hidden="true">
+                            <span /><span /><span />
+                        </div>
+                        <div class="keycard-meta">
+                            <span class="lux-label">Suite de acceso</span>
+                            <span class="keycard-number">Nº {{ cardNumber }}</span>
+                        </div>
+                    </div>
+
+                    <h2 class="lux-title keycard-title">Iniciar sesión</h2>
+
+                    <q-form class="keycard-form" @submit="submitLogin">
                         <q-input
                             v-model="loginForm.name"
-                            outlined
-                            dense
+                            dark
                             type="text"
                             label="Usuario o correo"
                             autocomplete="username"
+                            class="lux-field"
                             :disable="submitting"
                             lazy-rules
                             :rules="usernameRules"
                         >
                             <template #prepend>
-                                <q-icon name="person_outline" />
+                                <q-icon name="person_outline" size="20px" />
                             </template>
                         </q-input>
 
                         <q-input
                             v-model="loginForm.password"
-                            outlined
-                            dense
+                            dark
                             :type="showPassword ? 'text' : 'password'"
                             label="Contraseña"
                             autocomplete="current-password"
+                            class="lux-field"
                             :disable="submitting"
                             lazy-rules
                             :rules="passwordRules"
                         >
                             <template #prepend>
-                                <q-icon name="lock_outline" />
+                                <q-icon name="lock_outline" size="20px" />
                             </template>
                             <template #append>
                                 <q-icon
                                     :name="showPassword ? 'visibility_off' : 'visibility'"
+                                    size="20px"
                                     class="cursor-pointer"
                                     @click="showPassword = !showPassword"
                                 />
@@ -106,35 +84,31 @@
 
                         <q-btn
                             unelevated
-                            color="primary"
+                            no-caps
                             type="submit"
                             :loading="submitting"
-                            label="Entrar"
-                            icon-right="arrow_forward"
-                            class="login-submit"
-                        />
+                            class="lux-btn keycard-submit full-width"
+                        >
+                            <span>Abrir puerta</span>
+                            <q-icon name="vpn_key" size="18px" class="q-ml-sm" />
+                        </q-btn>
                     </q-form>
-                    <div class="forgot-password-wrap">
-                        <q-btn
-                            flat
-                            dense
-                            no-caps
-                            color="primary"
-                            label="¿Olvidaste tu contraseña?"
-                            class="forgot-password"
-                            @click="forgotOpen = true"
-                        />
+
+                    <div class="text-center q-mt-md">
+                        <button type="button" class="lux-link" @click="forgotOpen = true">
+                            ¿Olvidaste tu contraseña?
+                        </button>
                     </div>
-                </q-card-section>
-            </q-card>
+                </div>
+            </section>
         </div>
 
         <q-dialog v-model="forgotOpen" persistent>
-            <q-card class="forgot-card">
+            <q-card class="lux-dialog no-accent-bar">
                 <q-card-section>
-                    <div class="login-card-eyebrow">Recuperar acceso</div>
-                    <div class="text-h5 text-weight-bold">Olvidé mi contraseña</div>
-                    <div class="forgot-text q-mt-sm">
+                    <div class="lux-label">Recuperar acceso</div>
+                    <div class="lux-title forgot-title">Olvidé mi contraseña</div>
+                    <div class="lux-text q-mt-sm">
                         Escribe el correo asociado a tu cuenta y te enviaremos un enlace para crear una contraseña nueva.
                     </div>
                 </q-card-section>
@@ -142,25 +116,27 @@
                     <q-form class="q-gutter-md" @submit="requestPasswordReset">
                         <q-input
                             v-model="forgotEmail"
-                            outlined
+                            dark
                             autofocus
                             type="email"
                             label="Correo electrónico"
                             autocomplete="email"
+                            class="lux-field"
                             :disable="forgotSubmitting"
                             :rules="emailRules"
                         >
                             <template #prepend>
-                                <q-icon name="mail_outline" />
+                                <q-icon name="mail_outline" size="20px" />
                             </template>
                         </q-input>
                         <div class="row justify-end q-gutter-sm">
-                            <q-btn flat label="Cancelar" v-close-popup />
+                            <q-btn flat no-caps label="Cancelar" class="lux-btn-ghost" v-close-popup />
                             <q-btn
                                 unelevated
-                                color="primary"
+                                no-caps
                                 type="submit"
                                 label="Enviar enlace"
+                                class="lux-btn lux-btn--compact"
                                 :loading="forgotSubmitting"
                             />
                         </div>
@@ -168,19 +144,18 @@
                 </q-card-section>
             </q-card>
         </q-dialog>
-
-        <div class="login-footer">Sistema desarrollado por <strong>DoubLe Team</strong> · © 2026 Todos los derechos reservados.</div>
-    </div>
+    </AuthScene>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { isNavigationFailure, useRoute, useRouter } from 'vue-router'
 import { Notify } from 'quasar'
+import AuthScene from 'src/components/brand/AuthScene.vue'
+import { useBrandStore } from 'src/stores/brand-store'
 import { api } from 'src/boot/axios'
 import { useAuthStore } from 'src/stores/auth-store'
 import { useEmpresaStore } from 'src/stores/empresa-store'
-import { useThemeStore } from 'src/stores/theme-store'
 
 defineOptions({
     name: 'LoginPage'
@@ -190,7 +165,7 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const empresaStore = useEmpresaStore()
-const themeStore = useThemeStore()
+const brandStore = useBrandStore()
 const submitting = ref(false)
 const forgotOpen = ref(false)
 const forgotSubmitting = ref(false)
@@ -200,6 +175,9 @@ const loginForm = reactive({
     name: '',
     password: ''
 })
+
+const brandInitial = computed(() => (String(brandStore.name || 'R').trim().charAt(0) || 'R').toUpperCase())
+const cardNumber = String(new Date().getFullYear()).padStart(4, '0')
 
 const usernameRules = [
     (value) => Boolean(value) || 'El usuario es obligatorio'
@@ -214,11 +192,6 @@ const emailRules = [
     (value) => /.+@.+\..+/.test(String(value || '')) || 'El correo no es válido'
 ]
 
-/**
- * Submit the login form and redirect to the requested route.
- *
- * @returns {Promise<void>}
- */
 async function submitLogin() {
     submitting.value = true
 
@@ -290,304 +263,299 @@ async function requestPasswordReset() {
 </script>
 
 <style scoped>
-.login-page {
-    min-height: 100vh;
-    background: var(--app-auth-bg);
-    position: relative;
-    overflow: hidden;
+.login-stage {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: center;
 }
 
-.login-page::before {
+/* ---------- Hero editorial ---------- */
+.login-hero {
+    max-width: 36rem;
+    animation: lx-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.1s both;
+}
+
+.hero-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin: 0 0 1.4rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--lx-gold);
+}
+
+.hero-rule {
+    width: 48px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--lx-gold));
+}
+
+.hero-title {
+    margin: 0;
+    font-family: var(--app-font-display, 'Playfair Display'), Georgia, serif;
+    font-size: clamp(2.5rem, 5.4vw, 4.6rem);
+    line-height: 1.02;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    color: #fff;
+    text-shadow: 0 6px 40px rgba(0, 0, 0, 0.45);
+}
+
+.hero-title em {
+    display: block;
+    font-style: italic;
+    font-weight: 400;
+    background: linear-gradient(100deg,
+        var(--theme-gold-pale, #efe0bf) 0%,
+        var(--lx-gold) 35%,
+        var(--theme-gold, #b8893b) 60%,
+        var(--theme-gold-pale, #efe0bf) 100%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: foil 7s ease-in-out infinite alternate;
+}
+
+.hero-text {
+    margin: 1.6rem 0 0;
+    max-width: 29rem;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--lx-muted);
+}
+
+.hero-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.4rem;
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: rgba(247, 239, 227, 0.82);
+}
+
+.hero-features li {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.4rem;
+}
+
+.hero-features li + li::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    background: var(--lx-gold);
+    transform: rotate(45deg);
+}
+
+/* ---------- Llave-tarjeta ---------- */
+.keycard-wrap {
+    position: relative;
+    width: 100%;
+    animation: lx-card-in 1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s both;
+}
+
+.keycard-shadow {
+    position: absolute;
+    left: 10%;
+    right: 10%;
+    bottom: -28px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    filter: blur(24px);
+}
+
+.keycard-back {
+    position: absolute;
+    inset: 0;
+    border-radius: 26px;
+    transform: rotate(7deg) translate(18px, -10px);
+    background:
+        linear-gradient(135deg,
+            var(--theme-gold-pale, #efe0bf) 0%,
+            var(--lx-gold) 28%,
+            var(--theme-gold, #b8893b) 55%,
+            var(--lx-gold) 78%,
+            var(--theme-gold-pale, #efe0bf) 100%);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.keycard-back::after {
     content: '';
     position: absolute;
     inset: 0;
-    background:
-        radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.06), transparent 40%),
-        repeating-linear-gradient(
-            -12deg,
-            transparent,
-            transparent 18px,
-            rgba(255, 255, 255, 0.015) 18px,
-            rgba(255, 255, 255, 0.015) 19px
-        );
+    background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.08) 0 2px, transparent 2px 9px);
+}
+
+.keycard-back-mark {
+    position: absolute;
+    right: 22px;
+    top: 10px;
+    font-family: var(--app-font-display, 'Playfair Display'), Georgia, serif;
+    font-style: italic;
+    font-size: 4.5rem;
+    line-height: 1;
+    color: rgba(var(--theme-ink-rgb, 42, 20, 24), 0.35);
+}
+
+.keycard-wrap:hover .keycard-back {
+    transform: rotate(10deg) translate(28px, -16px);
+}
+
+.keycard-sheen {
+    position: absolute;
+    top: -60%;
+    left: -60%;
+    width: 60%;
+    height: 220%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+    transform: rotate(20deg);
+    animation: sheen 9s ease-in-out 1.4s infinite;
     pointer-events: none;
 }
 
-.login-orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(60px);
-    pointer-events: none;
-    animation: orbFloat 14s ease-in-out infinite alternate;
+.keycard-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.6rem;
 }
 
-.login-orb--one {
-    width: 420px;
-    height: 420px;
-    top: -120px;
-    left: -100px;
-    background: rgba(45, 212, 191, 0.28);
-}
-
-.login-orb--two {
-    width: 360px;
-    height: 360px;
-    bottom: -120px;
-    right: -80px;
-    background: rgba(217, 119, 6, 0.18);
-    animation-delay: -6s;
-}
-
-@keyframes orbFloat {
-    from { transform: translate3d(0, 0, 0) scale(1); }
-    to { transform: translate3d(40px, 30px, 0) scale(1.08); }
-}
-
-.auth-theme-toggle {
-    position: absolute;
-    top: 18px;
-    right: 18px;
-    z-index: 2;
-    color: #ecfdf5;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    backdrop-filter: blur(8px);
-}
-
-.auth-theme-toggle:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.login-shell {
+.keycard-chip {
     position: relative;
-    z-index: 1;
-    width: min(860px, 100%);
-    border-radius: 24px;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(18px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    animation: fadeRise 0.55s ease both;
-}
-
-.login-copy {
-    flex: 1 1 52%;
-    padding: 2rem 2.25rem;
-    color: #ecfdf5;
-    background:
-        linear-gradient(160deg, rgba(15, 118, 110, 0.45), rgba(15, 23, 42, 0.35)),
-        rgba(15, 23, 42, 0.25);
-}
-
-.login-brand {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    margin-bottom: 1.4rem;
-}
-
-.login-brand-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #0f172a;
-    background: linear-gradient(135deg, #99f6e4 0%, #5eead4 45%, #14b8a6 100%);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
-}
-
-.login-brand-bed {
-    width: 22px;
-    height: 16px;
-    display: block;
-}
-
-.login-brand-name {
-    font-family: var(--app-font-display);
-    font-size: 1.2rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    color: #fff;
-}
-
-.eyebrow {
-    margin: 0 0 0.6rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: #5eead4;
-}
-
-.login-title {
-    margin: 0;
-    font-family: var(--app-font-display);
-    font-size: clamp(1.3rem, 2.2vw, 1.75rem);
-    line-height: 1.15;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: #fff;
-}
-
-.login-text {
-    max-width: 30rem;
-    margin-top: 0.85rem;
-    font-size: 0.86rem;
-    line-height: 1.6;
-    color: rgba(236, 253, 245, 0.82);
-}
-
-.login-points {
-    display: grid;
-    gap: 0.55rem;
-    margin-top: 1.25rem;
-}
-
-.login-point {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    padding: 0.55rem 0.8rem;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    font-size: 0.8rem;
-    font-weight: 500;
-    transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.login-point:hover {
-    background: rgba(255, 255, 255, 0.16);
-    transform: translateX(4px);
-}
-
-.login-point-icon {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #5eead4;
-    background: rgba(15, 23, 42, 0.35);
-}
-
-.login-card {
-    flex: 1 1 48%;
-    padding: 1.25rem 1.5rem;
+    width: 46px;
+    height: 34px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, var(--theme-gold-pale, #efe0bf), var(--lx-gold) 45%, var(--theme-gold, #b8893b));
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background: var(--app-surface);
-    border-radius: 0;
-    border: none;
-    box-shadow: none !important;
+    gap: 5px;
+    padding: 0 7px;
 }
 
-.login-card-head {
-    padding-bottom: 0.25rem;
+.keycard-chip span {
+    display: block;
+    height: 1px;
+    background: rgba(var(--theme-ink-rgb, 42, 20, 24), 0.45);
 }
 
-.login-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    margin-bottom: 0.7rem;
+.keycard-chip::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 50%;
+    width: 1px;
+    background: rgba(var(--theme-ink-rgb, 42, 20, 24), 0.45);
+}
+
+.keycard-meta {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--app-primary);
-    background: var(--app-primary-soft);
-    border: 1px solid var(--app-border);
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
 }
 
-.login-card-eyebrow {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--app-primary);
-    margin-bottom: 0.35rem;
+.keycard-number {
+    font-family: var(--app-font-display, 'Playfair Display'), Georgia, serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: rgba(247, 239, 227, 0.7);
 }
 
-.login-card-title {
-    font-family: var(--app-font-display);
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: var(--app-ink);
-    letter-spacing: -0.02em;
+.keycard-title {
+    margin-bottom: 1.1rem;
 }
 
-.login-card-subtitle {
-    margin-top: 0.25rem;
-    font-size: 0.82rem;
-    color: var(--app-ink-muted);
-}
-
-.login-submit {
-    margin-top: 0.25rem;
-    min-height: 42px;
-    font-weight: 700;
-    border-radius: 12px;
-    box-shadow: 0 12px 26px var(--app-primary-glow);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.login-submit:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 16px 32px var(--app-primary-glow);
-}
-
-.forgot-password-wrap {
+.keycard-form {
     display: flex;
-    justify-content: center;
-    margin-top: 0.75rem;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
-.forgot-password {
-    font-weight: 650;
+.keycard-submit {
+    margin-top: 1.1rem;
 }
 
-.forgot-card {
-    width: min(440px, 92vw);
+.forgot-title {
+    margin-top: 0.35rem;
+    font-size: 1.5rem;
 }
 
-.forgot-text {
-    font-size: 0.9rem;
-    color: var(--app-ink-muted);
+@keyframes foil {
+    from { background-position: 0% 0; }
+    to { background-position: 100% 0; }
 }
 
-.login-footer {
-    position: relative;
-    z-index: 1;
-    margin-top: 1.25rem;
-    text-align: center;
-    font-family: var(--app-font);
-    font-size: 11px;
-    color: rgba(236, 253, 245, 0.55);
-    letter-spacing: 0.04em;
+@keyframes sheen {
+    0%, 70% { left: -60%; }
+    100% { left: 130%; }
 }
 
-@media (max-width: 840px) {
-    .login-shell {
-        flex-direction: column;
+@media (prefers-reduced-motion: reduce) {
+    .keycard-sheen,
+    .hero-title em {
+        animation: none;
+    }
+}
+
+@media (max-width: 960px) {
+    .login-stage {
+        grid-template-columns: 1fr;
+        max-width: 440px;
+        margin: 0 auto;
+        gap: 2.5rem;
+        padding-top: 2rem;
     }
 
-    .login-copy,
-    .login-card {
-        padding: 1.5rem;
+    .login-hero {
+        text-align: center;
+        max-width: none;
     }
 
-    .login-brand {
-        margin-bottom: 1.25rem;
+    .hero-eyebrow,
+    .hero-features {
+        justify-content: center;
     }
 
-    .login-points {
+    .hero-text {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .hero-title {
+        font-size: clamp(2.2rem, 9vw, 3.2rem);
+    }
+}
+
+@media (max-width: 520px) {
+    .hero-text,
+    .hero-features {
         display: none;
+    }
+
+    .keycard-back {
+        transform: rotate(4deg) translate(8px, -6px);
+    }
+
+    .keycard {
+        padding: 1.4rem 1.3rem 2.2rem;
     }
 }
 </style>
+
