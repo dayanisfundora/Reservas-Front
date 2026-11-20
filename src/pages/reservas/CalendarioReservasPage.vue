@@ -169,28 +169,26 @@
                         <q-btn
                             outline
                             dense
-                            no-caps
+                            round
                             icon="picture_as_pdf"
-                            label="PDF"
                             class="plan-outline-btn"
                             :loading="downloadingPdf"
                             :disable="loading || downloadingPdf || printingPdf"
                             @click="downloadCalendarPdf"
                         >
-                            <q-tooltip>Descargar PDF de la vista actual</q-tooltip>
+                            <q-tooltip>Descargar PDF</q-tooltip>
                         </q-btn>
                         <q-btn
                             outline
                             dense
-                            no-caps
+                            round
                             icon="print"
-                            label="Imprimir"
                             class="plan-outline-btn"
                             :loading="printingPdf"
                             :disable="loading || downloadingPdf || printingPdf"
                             @click="printCalendarPdf"
                         >
-                            <q-tooltip>Imprimir PDF de la vista actual</q-tooltip>
+                            <q-tooltip>Imprimir</q-tooltip>
                         </q-btn>
                         <q-btn
                             v-if="canManage"
@@ -1278,6 +1276,23 @@ const detailLabel = computed(() => {
     })
 })
 
+/**
+ * Order rooms by number in name when present, otherwise by creation id.
+ *
+ * @param {Array<{id?: number, nombre?: string}>} list
+ * @returns {Array}
+ */
+function sortRoomsForDisplay(list) {
+    return [...list].sort((a, b) => {
+        const matchA = String(a?.nombre ?? '').match(/\d+/)
+        const matchB = String(b?.nombre ?? '').match(/\d+/)
+        const numA = matchA ? Number(matchA[0]) : Number.MAX_SAFE_INTEGER
+        const numB = matchB ? Number(matchB[0]) : Number.MAX_SAFE_INTEGER
+        if (numA !== numB) return numA - numB
+        return Number(a?.id ?? 0) - Number(b?.id ?? 0)
+    })
+}
+
 const roomsGrouped = computed(() => {
     const map = new Map()
     for (const room of rooms.value) {
@@ -1291,7 +1306,10 @@ const roomsGrouped = computed(() => {
         }
         map.get(key).rooms.push(room)
     }
-    return [...map.values()]
+    return [...map.values()].map((grupo) => ({
+        ...grupo,
+        rooms: sortRoomsForDisplay(grupo.rooms)
+    }))
 })
 
 const visibleRoomsGrouped = computed(() => (
