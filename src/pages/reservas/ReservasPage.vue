@@ -42,7 +42,6 @@
             row-key="id"
             :rows="reservas"
             :columns="columns"
-            :loading="loading"
             :rows-per-page-options="[10, 25, 50]"
         >
             <template #body-cell-estado="props">
@@ -361,7 +360,7 @@
                                     dense
                                     rounded
                                     class="reserva-banner"
-                                    :class="disponibilidad.disponible ? 'bg-positive text-white' : 'bg-negative text-white'"
+                                    :class="disponibilidad.disponible ? 'is-ok' : 'is-busy'"
                                 >
                                     <template v-if="disponibilidad.disponible">
                                         Disponible · Capacidad {{ disponibilidad.capacidad }} ·
@@ -424,13 +423,12 @@ const proyectoStore = useProyectoStore()
 const authStore = useAuthStore()
 const canManage = computed(() => authStore.hasPermission('gestionar_reservas'))
 
-const loading = ref(false)
 const saving = ref(false)
 const dialogOpen = ref(false)
 const editingId = ref(null)
 const reservas = ref([])
 const habitaciones = ref([])
-const filtroEstado = ref('pendiente')
+const filtroEstado = ref(null)
 const disponibilidad = ref(null)
 let disponibilidadTimer = null
 
@@ -452,6 +450,7 @@ const form = reactive({
 })
 
 const estadoOptions = [
+    { label: 'Todas', value: null },
     { label: 'Pendientes', value: 'pendiente' },
     { label: 'Confirmadas', value: 'confirmada' },
     { label: 'Canceladas', value: 'cancelada' }
@@ -591,7 +590,6 @@ async function loadHabitaciones() {
 }
 
 async function loadReservas() {
-    loading.value = true
     try {
         const params = {}
         if (filtroEstado.value) {
@@ -607,8 +605,6 @@ async function loadReservas() {
             type: 'negative',
             message: error.response?.data?.message || 'No se pudieron cargar las reservas.'
         })
-    } finally {
-        loading.value = false
     }
 }
 
@@ -934,6 +930,20 @@ onMounted(async () => {
 
 .reserva-banner {
     margin: 0;
+    border: 1px solid transparent;
+    font-weight: 600;
+}
+
+.reserva-banner.is-ok {
+    color: var(--theme-wine-deep) !important;
+    background: linear-gradient(105deg, #f7efe3 0%, var(--theme-ivory-2) 100%) !important;
+    border-color: rgba(var(--theme-wine-rgb), 0.22) !important;
+}
+
+.reserva-banner.is-busy {
+    color: #7f1d1d !important;
+    background: linear-gradient(105deg, #fef2f2 0%, #fee2e2 100%) !important;
+    border-color: rgba(185, 28, 28, 0.25) !important;
 }
 
 .reserva-banner-placeholder {
@@ -950,7 +960,7 @@ onMounted(async () => {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    color: #7a1f2b;
+    color: var(--theme-wine);
     font-weight: 600;
 }
 
@@ -1034,6 +1044,36 @@ body.app-dark .reserva-banner-placeholder {
     color: var(--app-ink-muted, #b3a597) !important;
 }
 
+body.body--dark .reserva-banner.is-ok,
+body.app-dark .reserva-banner.is-ok {
+    color: var(--theme-gold-pale) !important;
+    background:
+        radial-gradient(120% 90% at 0% 0%, rgba(var(--theme-wine-rgb), 0.28), transparent 55%),
+        color-mix(in srgb, var(--theme-dark) 82%, var(--theme-wine-deep)) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.28) !important;
+}
+
+body.body--dark .reserva-banner.is-busy,
+body.app-dark .reserva-banner.is-busy {
+    color: #f2a4a0 !important;
+    background:
+        radial-gradient(120% 90% at 0% 0%, rgba(179, 38, 30, 0.28), transparent 55%),
+        color-mix(in srgb, var(--theme-dark) 78%, #5c1510) !important;
+    border-color: rgba(242, 164, 160, 0.28) !important;
+}
+
+body.body--dark .taxi-ok,
+body.app-dark .taxi-ok,
+html.app-dark .taxi-ok {
+    color: var(--theme-wine-on-dark, #e8a5ae) !important;
+}
+
+body.body--dark .taxi-warn,
+body.app-dark .taxi-warn,
+html.app-dark .taxi-warn {
+    color: #f0c14d !important;
+}
+
 /* Lista de reservas: forzar look vino/oro sobre .q-dark de Quasar */
 body.body--dark .theme-table.q-table__card,
 body.body--dark .theme-table.q-table__card--dark,
@@ -1054,6 +1094,15 @@ html.app-dark .theme-table thead tr th {
     background: linear-gradient(180deg, var(--theme-wine-deep) 0%, var(--theme-wine) 100%) !important;
     color: var(--theme-gold-pale) !important;
     border-bottom: 1px solid rgba(var(--theme-gold-light-rgb), 0.3) !important;
+}
+
+body.body--dark .theme-table thead tr.q-table__progress > th,
+body.app-dark .theme-table thead tr.q-table__progress > th,
+html.app-dark .theme-table thead tr.q-table__progress > th {
+    padding: 0 !important;
+    border: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
 }
 
 body.body--dark .theme-table .q-table__bottom,

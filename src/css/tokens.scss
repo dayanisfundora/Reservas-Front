@@ -4,7 +4,8 @@
 :root {
     @each $key, $color in $theme-palette-defaults {
         --theme-#{$key}: #{$color};
-        --theme-#{$key}-rgb: #{color.channel($color, 'red', $space: rgb)}, #{color.channel($color, 'green', $space: rgb)}, #{color.channel($color, 'blue', $space: rgb)};
+        // color.channel(... $space) needs Sass ≥1.79; ReservasApp uses 1.74 → color.red/green/blue
+        --theme-#{$key}-rgb: #{color.red($color)}, #{color.green($color)}, #{color.blue($color)};
     }
 
     --app-wine-on-dark: var(--theme-wine-on-dark);

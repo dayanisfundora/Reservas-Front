@@ -691,10 +691,19 @@ onMounted(loadAdminData)
     padding: 1.5rem 1.75rem;
     border-radius: 22px;
     background:
-        radial-gradient(circle at 90% 10%, rgba(217, 119, 6, 0.28), transparent 40%),
-        linear-gradient(135deg, #0f172a 0%, #7a1f2b 55%, #8e2a36 100%);
-    color: white;
-    box-shadow: 0 24px 50px rgba(var(--theme-wine-rgb), 0.22);
+        radial-gradient(circle at 90% 10%, rgba(var(--theme-gold-light-rgb, 212, 175, 106), 0.3), transparent 42%),
+        linear-gradient(135deg,
+            var(--theme-ink, #2a1418) 0%,
+            var(--theme-wine-deep, #4a111b) 42%,
+            var(--theme-wine, #7a1f2b) 72%,
+            var(--theme-wine-light, #8e2a36) 100%);
+    color: #fff;
+    border: 1px solid color-mix(in srgb, var(--theme-gold, #b8893b) 30%, transparent);
+    box-shadow: 0 24px 50px rgba(var(--theme-wine-rgb, 122, 31, 43), 0.28);
+}
+
+.admin-hero :deep(.q-btn) {
+    color: var(--theme-gold-pale, #efe0bf);
 }
 
 .admin-eyebrow {
@@ -703,22 +712,23 @@ onMounted(loadAdminData)
     letter-spacing: 0.14em;
     font-size: 0.75rem;
     font-weight: 700;
-    color: rgba(94, 234, 212, 0.9);
+    color: var(--theme-gold-pale, #efe0bf);
 }
 
 .admin-title {
     margin: 0;
-    font-family: var(--app-font-display);
+    font-family: var(--app-font-display, 'Playfair Display'), Georgia, serif;
     font-weight: 600;
     letter-spacing: -0.02em;
     font-size: clamp(1.6rem, 2.8vw, 2.4rem);
     line-height: 1.15;
+    color: #fff;
 }
 
 .admin-text {
     margin: 1rem 0 0;
     max-width: 42rem;
-    color: rgba(236, 253, 245, 0.85);
+    color: rgba(247, 239, 227, 0.84);
     line-height: 1.55;
 }
 

@@ -26,11 +26,10 @@
         <q-table
             flat
             bordered
-            class="surface-card"
+            class="surface-card theme-table"
             row-key="id"
             :rows="filteredRows"
             :columns="columns"
-            :loading="loading"
             :rows-per-page-options="[10, 25, 50]"
         >
             <template #body-cell-tipo="props">
@@ -75,71 +74,132 @@
         </q-table>
 
         <q-dialog v-model="dialogOpen" persistent>
-            <q-card style="min-width: 440px">
-                <q-card-section>
+            <q-card class="habitacion-dialog no-accent-bar">
+                <q-card-section class="row items-center q-pb-none">
                     <div class="text-h6">{{ editingId ? 'Editar habitación' : 'Nueva habitación' }}</div>
+                    <q-space />
+                    <q-btn flat round dense icon="close" v-close-popup />
                 </q-card-section>
-                <q-card-section class="q-gutter-md">
-                    <q-select
-                        v-model="form.casa_id"
-                        :options="casaOptions"
-                        emit-value
-                        map-options
-                        outlined
-                        label="Casa *"
-                    />
-                    <q-input v-model="form.nombre" outlined label="Nombre *" />
-                    <q-input v-model="form.codigo" outlined label="Código" />
-                    <q-select
-                        v-model="form.tipo"
-                        :options="tipoOptions"
-                        emit-value
-                        map-options
-                        outlined
-                        label="Tipo *"
-                    />
-                    <q-input
-                        v-model.number="form.capacidad"
-                        type="number"
-                        min="1"
-                        outlined
-                        label="Capacidad (personas) *"
-                        :hint="form.tipo === 'compartida'
-                            ? 'Máximo de personas concurrentes en la habitación'
-                            : 'Tope de personas de la habitación (queda bloqueada si hay una reserva)'"
-                    />
-                    <div>
-                        <div class="text-caption text-grey-7 q-mb-xs">Color en calendario *</div>
-                        <div class="color-palette">
-                            <button
-                                v-for="c in colorPalette"
-                                :key="c"
-                                type="button"
-                                class="color-option"
-                                :class="{ 'is-selected': form.color === c }"
-                                :style="{ background: c }"
-                                :title="c"
-                                @click="form.color = c"
+
+                <q-card-section class="q-pt-md q-pb-none">
+                    <div class="hab-pane">
+                        <div class="hab-block">
+                            <div class="hab-block-label">Ubicación e identidad</div>
+                            <div class="row q-col-gutter-md">
+                                <div class="col-12">
+                                    <q-select
+                                        v-model="form.casa_id"
+                                        :options="casaOptions"
+                                        emit-value
+                                        map-options
+                                        outlined
+                                        dense
+                                        label="Casa *"
+                                        hide-bottom-space
+                                    />
+                                </div>
+                                <div class="col-12 col-sm-7">
+                                    <q-input v-model="form.nombre" outlined dense label="Nombre *" hide-bottom-space />
+                                </div>
+                                <div class="col-12 col-sm-5">
+                                    <q-input v-model="form.codigo" outlined dense label="Código" hide-bottom-space />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hab-block">
+                            <div class="hab-block-label">Configuración</div>
+                            <div class="row q-col-gutter-md">
+                                <div class="col-12 col-sm-6">
+                                    <q-select
+                                        v-model="form.tipo"
+                                        :options="tipoOptions"
+                                        emit-value
+                                        map-options
+                                        outlined
+                                        dense
+                                        label="Tipo *"
+                                        hide-bottom-space
+                                    />
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <q-input
+                                        v-model.number="form.capacidad"
+                                        type="number"
+                                        min="1"
+                                        outlined
+                                        dense
+                                        label="Capacidad (personas) *"
+                                        hide-bottom-space
+                                    />
+                                </div>
+                                <div class="col-12">
+                                    <div class="hab-hint">
+                                        {{ form.tipo === 'compartida'
+                                            ? 'Máximo de personas concurrentes en la habitación.'
+                                            : 'Tope de personas (queda bloqueada si hay una reserva).' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hab-block">
+                            <div class="hab-block-label">Color en calendario *</div>
+                            <div class="color-palette">
+                                <button
+                                    v-for="c in colorPalette"
+                                    :key="c"
+                                    type="button"
+                                    class="color-option"
+                                    :class="{ 'is-selected': form.color === c }"
+                                    :style="{ background: c }"
+                                    :title="c"
+                                    @click="form.color = c"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="hab-block">
+                            <div class="hab-status">
+                                <q-toggle
+                                    v-model="form.activo"
+                                    color="primary"
+                                    dense
+                                    :label="form.activo ? 'Habitación activa' : 'Habitación inactiva'"
+                                />
+                                <div class="hab-hint">
+                                    {{ form.activo
+                                        ? 'Disponible para nuevas reservas.'
+                                        : 'No se ofrecerá para futuras reservas.' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hab-block hab-block--last">
+                            <q-input
+                                v-model="form.descripcion"
+                                outlined
+                                dense
+                                type="textarea"
+                                :rows="3"
+                                label="Descripción"
+                                hide-bottom-space
                             />
                         </div>
                     </div>
-                    <div>
-                        <q-toggle
-                            v-model="form.activo"
-                            color="positive"
-                            :label="form.activo ? 'Habitación activa' : 'Habitación inactiva'"
-                        />
-                        <div class="text-caption text-grey-7 q-mt-xs">
-                            {{ form.activo
-                                ? 'Disponible para nuevas reservas'
-                                : 'No se ofrecerá para futuras reservas' }}
-                        </div>
-                    </div>
-                    <q-input v-model="form.descripcion" outlined type="textarea" label="Descripción" />
                 </q-card-section>
-                <q-card-actions align="right">
-                    <q-btn flat label="Cancelar" v-close-popup />
-                    <q-btn color="primary" :label="editingId ? 'Guardar' : 'Crear'" :loading="saving" @click="saveHabitacion" />
+
+                <q-card-actions align="right" class="q-px-md q-pb-md">
+                    <q-btn flat no-caps label="Cancelar" v-close-popup />
+                    <q-btn
+                        unelevated
+                        no-caps
+                        color="primary"
+                        class="hab-save-btn"
+                        :label="editingId ? 'Guardar' : 'Crear'"
+                        :loading="saving"
+                        @click="saveHabitacion"
+                    />
                 </q-card-actions>
             </q-card>
         </q-dialog>
@@ -157,7 +217,6 @@ defineOptions({
 })
 
 const proyectoStore = useProyectoStore()
-const loading = ref(false)
 const saving = ref(false)
 const dialogOpen = ref(false)
 const editingId = ref(null)
@@ -182,17 +241,17 @@ const tipoOptions = [
 
 const colorPalette = [
     '#7a1f2b',
-    '#1d4ed8',
-    '#7c3aed',
-    '#db2777',
-    '#ea580c',
-    '#ca8a04',
-    '#059669',
-    '#0891b2',
-    '#dc2626',
-    '#4f46e5',
-    '#9333ea',
-    '#0e7490'
+    '#4a111b',
+    '#8e2a36',
+    '#b8893b',
+    '#c4392a',
+    '#6b2d8b',
+    '#2f6fbf',
+    '#1aa6a0',
+    '#2e9b4a',
+    '#e67a22',
+    '#e6c20f',
+    '#3b1a20'
 ]
 
 const columns = [
@@ -231,7 +290,6 @@ watch(
 )
 
 async function loadHabitaciones() {
-    loading.value = true
     try {
         const { data } = await api.get('/habitaciones', { skipScopeParams: true })
         habitaciones.value = data.data ?? []
@@ -240,8 +298,6 @@ async function loadHabitaciones() {
             type: 'negative',
             message: error.response?.data?.message || 'No se pudieron cargar las habitaciones.'
         })
-    } finally {
-        loading.value = false
     }
 }
 
@@ -335,33 +391,125 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.habitacion-dialog {
+    width: min(520px, 94vw);
+    border-radius: 20px !important;
+    border: 1px solid rgba(var(--theme-gold-light-rgb), 0.28) !important;
+    overflow: hidden;
+}
+
+.hab-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 2px 8px;
+}
+
+.hab-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(var(--theme-gold-rgb), 0.12);
+}
+
+.hab-block--last {
+    border-bottom: 0;
+    padding-bottom: 4px;
+}
+
+.hab-block-label {
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--app-ink-muted);
+}
+
+.hab-hint {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--app-ink-muted);
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(var(--theme-wine-rgb), 0.06);
+    border: 1px solid rgba(var(--theme-wine-rgb), 0.1);
+}
+
+.hab-status {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hab-save-btn {
+    min-width: 108px;
+}
+
 .color-swatch {
     display: inline-block;
     width: 18px;
     height: 18px;
     border-radius: 999px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(var(--theme-gold-rgb), 0.28);
     vertical-align: middle;
 }
 
 .color-palette {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
 }
 
 .color-option {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 999px;
     border: 2px solid transparent;
     cursor: pointer;
     padding: 0;
-    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 0 0 1px rgba(var(--theme-gold-rgb), 0.22);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.color-option:hover {
+    transform: scale(1.06);
 }
 
 .color-option.is-selected {
-    border-color: #0f172a;
-    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.2);
+    border-color: var(--theme-gold-light, #d4af6a);
+    box-shadow:
+        0 0 0 2px rgba(var(--theme-gold-light-rgb), 0.35),
+        0 4px 12px rgba(var(--theme-wine-rgb), 0.28);
+}
+</style>
+
+<style>
+body.body--dark .habitacion-dialog,
+body.app-dark .habitacion-dialog {
+    background: var(--theme-dark) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.28) !important;
+}
+
+body.body--dark .hab-block,
+body.app-dark .hab-block {
+    border-bottom-color: rgba(var(--theme-gold-light-rgb), 0.1) !important;
+}
+
+body.body--dark .hab-block-label,
+body.app-dark .hab-block-label {
+    color: rgba(var(--theme-gold-pale-rgb, 239, 224, 191), 0.72) !important;
+}
+
+body.body--dark .hab-hint,
+body.app-dark .hab-hint {
+    color: var(--app-ink-muted, #b3a597) !important;
+    background: rgba(var(--theme-wine-rgb), 0.16) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.14) !important;
+}
+
+body.body--dark .color-option.is-selected,
+body.app-dark .color-option.is-selected {
+    border-color: var(--theme-gold-pale) !important;
 }
 </style>

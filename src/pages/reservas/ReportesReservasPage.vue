@@ -617,6 +617,33 @@ onMounted(async () => {
     line-height: 1.2;
 }
 
+body.body--dark .kpi-card,
+body.app-dark .kpi-card,
+html.app-dark .kpi-card {
+    background: color-mix(in srgb, var(--theme-dark, #241a1c) 92%, var(--theme-wine-deep, #4a111b));
+    border-color: color-mix(in srgb, var(--theme-gold, #b8893b) 22%, transparent);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+body.body--dark .kpi-icon,
+body.app-dark .kpi-icon,
+html.app-dark .kpi-icon {
+    color: var(--theme-gold-pale, #efe0bf);
+    background: color-mix(in srgb, var(--theme-wine, #7a1f2b) 42%, transparent);
+}
+
+body.body--dark .kpi-label,
+body.app-dark .kpi-label,
+html.app-dark .kpi-label {
+    color: rgba(247, 239, 227, 0.62);
+}
+
+body.body--dark .kpi-value,
+body.app-dark .kpi-value,
+html.app-dark .kpi-value {
+    color: var(--theme-gold-pale, #efe0bf);
+}
+
 .agency-list {
     display: flex;
     flex-direction: column;

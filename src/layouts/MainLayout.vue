@@ -784,7 +784,14 @@ body.body--dark .header-select-menu .q-item,
 body.body--dark .header-select-menu .q-item__label,
 body.body--dark .header-select-menu .q-item__section {
     color: var(--app-ink, #f1e8dc) !important;
-    background: var(--theme-dark);
+    background: color-mix(in srgb, var(--theme-dark) 92%, var(--theme-wine-deep));
+}
+
+body.body--dark .user-menu .text-negative,
+body.body--dark .user-menu .q-icon.text-negative,
+body.app-dark .user-menu .text-negative,
+body.app-dark .user-menu .q-icon.text-negative {
+    color: #f2a4a0 !important;
 }
 
 /* Shell: header wine + línea dorada (ambos modos) */

@@ -363,7 +363,7 @@
                 </div>
 
                 <!-- LIBRO: filas = días, columnas = habitaciones -->
-                <div v-else-if="viewMode === 'libro'" class="book-grid-wrap">
+                <div ref="bookGridWrapRef" v-else-if="viewMode === 'libro'" class="book-grid-wrap">
                     <div v-if="!visibleRooms.length" class="q-pa-lg text-grey-7">
                         Seleccione al menos una habitación en el panel izquierdo.
                     </div>
@@ -390,6 +390,7 @@
                         <template v-for="day in bookDays" :key="`bd-${day}`">
                             <div
                                 class="book-day-label"
+                                :data-day="day"
                                 :class="{ 'is-today': day === todayIso, 'is-weekend': isWeekend(day) }"
                             >
                                 <div class="grid-day-wd">{{ weekdayShort(day) }}</div>
@@ -711,31 +712,34 @@
                             v-if="canManage && (activeReserva.estado === 'confirmada' || activeReserva.estado === 'pendiente')"
                             flat
                             no-caps
+                            dense
+                            class="rv-action-cancel"
                             color="negative"
                             icon="event_busy"
-                            label="Cancelar reserva"
+                            label="Cancelar"
                             @click="confirmCancel = true"
                         />
-                        <q-space />
-                        <q-btn
-                            v-if="canManage && activeReserva.estado === 'pendiente'"
-                            unelevated
-                            no-caps
-                            color="positive"
-                            icon="check_circle"
-                            label="Confirmar"
-                            :loading="confirming"
-                            @click="confirmarReservaActiva"
-                        />
-                        <q-btn
-                            v-if="canEditActive"
-                            unelevated
-                            no-caps
-                            color="primary"
-                            icon="edit"
-                            label="Editar reserva"
-                            @click="openEditReserva(activeReserva)"
-                        />
+                        <div class="rv-actions-primary">
+                            <q-btn
+                                v-if="canEditActive"
+                                outline
+                                no-caps
+                                class="rv-action-edit"
+                                icon="edit"
+                                label="Editar"
+                                @click="openEditReserva(activeReserva)"
+                            />
+                            <q-btn
+                                v-if="canManage && activeReserva.estado === 'pendiente'"
+                                unelevated
+                                no-caps
+                                class="rv-action-confirm"
+                                icon="check_circle"
+                                label="Confirmar"
+                                :loading="confirming"
+                                @click="confirmarReservaActiva"
+                            />
+                        </div>
                     </div>
                 </template>
 
@@ -1089,7 +1093,7 @@
                                     dense
                                     rounded
                                     class="reserva-banner"
-                                    :class="disponibilidad.disponible ? 'bg-positive text-white' : 'bg-negative text-white'"
+                                    :class="disponibilidad.disponible ? 'is-ok' : 'is-busy'"
                                 >
                                     <template v-if="disponibilidad.disponible">
                                         Disponible · Capacidad {{ disponibilidad.capacidad }} ·
@@ -1124,7 +1128,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Notify, date as qdate } from 'quasar'
 import { api } from 'src/boot/axios'
@@ -1164,6 +1168,7 @@ const rooms = ref([])
 const reservas = ref([])
 const selectedDate = ref(formatLocalDate(new Date()))
 const viewMode = ref('libro')
+const bookGridWrapRef = ref(null)
 const search = ref('')
 const selectedHabitacionIds = ref([])
 const detailOpen = ref(false)
@@ -1441,6 +1446,7 @@ const gridStyle = computed(() => ({
 }))
 
 const bookGridStyle = computed(() => ({
+    // Columnas fluidas: con pocas habitaciones llenan el ancho; con muchas, scroll horizontal
     gridTemplateColumns: `72px repeat(${Math.max(visibleRooms.value.length, 1)}, minmax(140px, 1fr))`
 }))
 
@@ -1507,6 +1513,9 @@ watch([filtroCasaId, monthKey, viewMode], () => {
 })
 
 watch(viewMode, (mode) => {
+    if (mode === 'libro') {
+        scrollMapToDay(todayIso, 'auto')
+    }
     if (mode !== 'mensual' || filtroCasaId.value != null) return
     const fallback = casaActivaId.value ?? proyectoStore.casas[0]?.id ?? null
     if (fallback == null) return
@@ -1517,6 +1526,12 @@ watch(viewMode, (mode) => {
         type: 'info',
         message: 'La vista mensual muestra una sola casa.'
     })
+})
+
+watch(monthKey, () => {
+    if (viewMode.value === 'libro') {
+        scrollMapToDay(todayIso, 'auto')
+    }
 })
 
 watch(
@@ -1651,6 +1666,42 @@ function shiftPeriod(delta) {
 
 function goToday() {
     selectedDate.value = formatLocalDate(new Date())
+    scrollMapToDay(todayIso, 'smooth')
+}
+
+/**
+ * En vista Mapa, desplaza el grid hasta la fila del día indicado
+ * (por defecto hoy), dejando espacio al encabezado sticky.
+ *
+ * @param {string} iso
+ * @param {'auto'|'smooth'} [behavior='auto']
+ * @returns {Promise<void>}
+ */
+async function scrollMapToDay(iso, behavior = 'auto') {
+    if (viewMode.value !== 'libro') return
+    if (!iso || iso.slice(0, 7) !== monthKey.value) return
+
+    await nextTick()
+    await new Promise((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve))
+    })
+
+    const wrap = bookGridWrapRef.value
+    if (!wrap) return
+
+    const target = wrap.querySelector(`[data-day="${iso}"]`)
+    if (!target) return
+
+    const header = wrap.querySelector('.book-corner')
+    const headerH = header ? header.getBoundingClientRect().height : 48
+    const wrapRect = wrap.getBoundingClientRect()
+    const rowRect = target.getBoundingClientRect()
+    const nextTop = wrap.scrollTop + (rowRect.top - wrapRect.top) - headerH - 6
+
+    wrap.scrollTo({
+        top: Math.max(0, nextTop),
+        behavior
+    })
 }
 
 function onMiniDateChange() {
@@ -2175,6 +2226,12 @@ async function loadData() {
         })
     } finally {
         loading.value = false
+        if (viewMode.value === 'libro') {
+            const wrap = bookGridWrapRef.value
+            if (!wrap || wrap.scrollTop < 8) {
+                await scrollMapToDay(todayIso, 'auto')
+            }
+        }
     }
 }
 
@@ -2196,6 +2253,9 @@ onMounted(async () => {
         skipMonthWatch = false
     }
     await applyReservaDeepLink()
+
+    const focusDay = /^\d{4}-\d{2}-\d{2}$/.test(fechaRaw) ? fechaRaw : todayIso
+    await scrollMapToDay(focusDay, 'auto')
 })
 </script>
 
@@ -2964,11 +3024,14 @@ onMounted(async () => {
     overflow: auto;
     padding: 8px;
     max-height: calc(100vh - 210px);
+    width: 100%;
+    min-width: 0;
 }
 
 .book-grid {
     display: grid;
     gap: 0;
+    width: 100%;
     min-width: max-content;
 }
 
@@ -3287,7 +3350,7 @@ onMounted(async () => {
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    color: #7a1f2b;
+    color: var(--theme-wine, #7a1f2b);
     font-size: 10px;
     font-weight: 600;
 }
@@ -3297,6 +3360,20 @@ onMounted(async () => {
 .day-taxi-warn {
     color: #c2410c;
     font-weight: 700;
+}
+
+body.body--dark .plan-taxi,
+body.app-dark .plan-taxi {
+    color: var(--theme-wine-on-dark, #e8a5ae) !important;
+}
+
+body.body--dark .plan-taxi-warn,
+body.body--dark .book-taxi-warn,
+body.body--dark .day-taxi-warn,
+body.app-dark .plan-taxi-warn,
+body.app-dark .book-taxi-warn,
+body.app-dark .day-taxi-warn {
+    color: #f0c14d !important;
 }
 
 .plan-taxi-warn {
@@ -3428,6 +3505,20 @@ onMounted(async () => {
 
 .reserva-banner {
     margin: 0;
+    border: 1px solid transparent;
+    font-weight: 600;
+}
+
+.reserva-banner.is-ok {
+    color: var(--theme-wine-deep) !important;
+    background: linear-gradient(105deg, #f7efe3 0%, var(--theme-ivory-2) 100%) !important;
+    border-color: rgba(var(--theme-wine-rgb), 0.22) !important;
+}
+
+.reserva-banner.is-busy {
+    color: #7f1d1d !important;
+    background: linear-gradient(105deg, #fef2f2 0%, #fee2e2 100%) !important;
+    border-color: rgba(185, 28, 28, 0.25) !important;
 }
 
 .reserva-banner-placeholder {
@@ -3448,21 +3539,25 @@ onMounted(async () => {
 
 /* ── Detalle de reserva ── */
 .rv-card {
-    width: min(520px, 95vw);
+    width: min(540px, 95vw);
     border-radius: 20px !important;
     overflow: hidden;
     background: var(--plan-surface) !important;
     color: var(--plan-ink);
     border: 1px solid var(--plan-border);
+    box-shadow: var(--plan-shadow);
 }
 
 .rv-hero {
-    padding: 14px 18px 18px;
-    background: linear-gradient(
-        135deg,
-        color-mix(in srgb, var(--room-color) 24%, var(--plan-surface)) 0%,
-        color-mix(in srgb, var(--room-color) 6%, var(--plan-surface)) 100%
-    );
+    padding: 16px 18px 18px;
+    background:
+        radial-gradient(90% 120% at 100% 0%, rgba(var(--theme-gold-rgb), 0.14), transparent 55%),
+        radial-gradient(120% 100% at 0% 0%, rgba(var(--theme-wine-rgb), 0.14), transparent 50%),
+        linear-gradient(
+            165deg,
+            color-mix(in srgb, var(--theme-wine-deep) 18%, var(--plan-surface)) 0%,
+            var(--plan-surface) 72%
+        );
     border-bottom: 1px solid var(--plan-border);
 }
 
@@ -3523,9 +3618,17 @@ onMounted(async () => {
     font-size: 18px;
     font-weight: 800;
     letter-spacing: 0.02em;
-    color: #fff;
-    background: var(--room-color);
-    box-shadow: 0 8px 20px color-mix(in srgb, var(--room-color) 40%, transparent);
+    color: #f7efe3;
+    background: linear-gradient(
+        145deg,
+        var(--theme-wine-light) 0%,
+        var(--theme-wine) 48%,
+        var(--theme-wine-deep) 100%
+    );
+    border: 1px solid rgba(var(--theme-gold-light-rgb), 0.35);
+    box-shadow:
+        0 8px 20px rgba(var(--theme-wine-rgb), 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .rv-guest-text {
@@ -3556,7 +3659,8 @@ onMounted(async () => {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--room-color);
+    background: var(--theme-gold-light, var(--theme-gold));
+    box-shadow: 0 0 0 3px rgba(var(--theme-gold-light-rgb), 0.18);
 }
 
 .rv-room-type {
@@ -3793,15 +3897,61 @@ svg.rv-tile-bed {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
-    margin-top: 12px;
-    padding: 12px 18px 16px;
+    justify-content: space-between;
+    gap: 10px 12px;
+    margin-top: 4px;
+    padding: 14px 18px 16px;
     border-top: 1px solid var(--plan-border-soft);
+    background:
+        linear-gradient(180deg, transparent 0%, rgba(var(--theme-wine-rgb), 0.04) 100%);
+}
+
+.rv-actions-primary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-left: auto;
 }
 
 .rv-actions .q-btn {
-    border-radius: 10px;
-    font-weight: 600;
+    border-radius: 11px;
+    font-weight: 650;
+    min-height: 38px;
+    padding: 0 14px;
+}
+
+.rv-action-cancel {
+    color: var(--plan-danger-ink) !important;
+}
+
+.rv-action-edit {
+    color: var(--theme-wine) !important;
+    border-color: rgba(var(--theme-gold-rgb), 0.45) !important;
+    background: transparent !important;
+}
+
+.rv-action-edit:hover {
+    background: rgba(var(--theme-gold-rgb), 0.1) !important;
+    border-color: var(--theme-gold) !important;
+}
+
+.rv-action-confirm {
+    min-width: 132px;
+    color: #f7efe3 !important;
+    background: linear-gradient(
+        135deg,
+        var(--theme-wine-light) 0%,
+        var(--theme-wine) 52%,
+        var(--theme-wine-deep) 100%
+    ) !important;
+    box-shadow: 0 6px 18px rgba(var(--theme-wine-rgb), 0.35);
+}
+
+.rv-action-confirm:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 8px 22px rgba(var(--theme-wine-rgb), 0.42);
 }
 
 .rv-confirm {
@@ -4259,6 +4409,24 @@ body.app-dark .reserva-dialog .reserva-banner-placeholder {
     color: var(--app-ink-muted, #b3a597) !important;
 }
 
+body.body--dark .reserva-banner.is-ok,
+body.app-dark .reserva-banner.is-ok {
+    color: var(--theme-gold-pale) !important;
+    background:
+        radial-gradient(120% 90% at 0% 0%, rgba(var(--theme-wine-rgb), 0.28), transparent 55%),
+        color-mix(in srgb, var(--theme-dark) 82%, var(--theme-wine-deep)) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.28) !important;
+}
+
+body.body--dark .reserva-banner.is-busy,
+body.app-dark .reserva-banner.is-busy {
+    color: #f2a4a0 !important;
+    background:
+        radial-gradient(120% 90% at 0% 0%, rgba(179, 38, 30, 0.28), transparent 55%),
+        color-mix(in srgb, var(--theme-dark) 78%, #5c1510) !important;
+    border-color: rgba(242, 164, 160, 0.28) !important;
+}
+
 body.body--dark .planning-page .view-switch .q-btn.text-grey-6 {
     color: var(--plan-ink-2, #e2d5c8) !important;
 }
@@ -4338,6 +4506,99 @@ body.body--dark .workload-card {
     background: var(--plan-surface) !important;
     border-color: var(--plan-border) !important;
     box-shadow: var(--plan-shadow);
+}
+
+body.body--dark .rv-card,
+body.app-dark .rv-card {
+    background:
+        radial-gradient(120% 80% at 0% 0%, rgba(var(--theme-wine-rgb), 0.12), transparent 50%),
+        var(--theme-dark) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.22) !important;
+}
+
+body.body--dark .rv-hero,
+body.app-dark .rv-hero {
+    background:
+        radial-gradient(90% 120% at 100% 0%, rgba(var(--theme-gold-light-rgb), 0.12), transparent 55%),
+        radial-gradient(120% 100% at 0% 0%, rgba(var(--theme-wine-rgb), 0.28), transparent 52%),
+        linear-gradient(
+            165deg,
+            color-mix(in srgb, var(--theme-wine-deep) 58%, var(--theme-dark)) 0%,
+            var(--theme-dark-page) 100%
+        ) !important;
+    border-bottom-color: rgba(var(--theme-gold-light-rgb), 0.18) !important;
+}
+
+body.body--dark .rv-avatar,
+body.app-dark .rv-avatar {
+    color: var(--theme-gold-pale) !important;
+    background: linear-gradient(
+        145deg,
+        var(--theme-wine) 0%,
+        var(--theme-wine-deep) 55%,
+        #2a0d13 100%
+    ) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.4) !important;
+    box-shadow:
+        0 8px 22px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(var(--theme-gold-light-rgb), 0.18) !important;
+}
+
+body.body--dark .rv-status,
+body.app-dark .rv-status {
+    background: rgba(0, 0, 0, 0.28) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.2) !important;
+    color: var(--theme-gold-pale) !important;
+}
+
+body.body--dark .rv-room-type,
+body.app-dark .rv-room-type {
+    background: rgba(0, 0, 0, 0.28) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.16) !important;
+    color: var(--app-ink-muted, #b3a597) !important;
+}
+
+body.body--dark .rv-actions,
+body.app-dark .rv-actions {
+    background: rgba(0, 0, 0, 0.18) !important;
+    border-top-color: rgba(var(--theme-gold-light-rgb), 0.14) !important;
+}
+
+body.body--dark .rv-action-cancel,
+body.app-dark .rv-action-cancel {
+    color: #f2a4a0 !important;
+}
+
+body.body--dark .rv-action-edit,
+body.app-dark .rv-action-edit {
+    color: var(--theme-gold-pale) !important;
+    border-color: rgba(var(--theme-gold-light-rgb), 0.45) !important;
+    background: rgba(var(--theme-gold-light-rgb), 0.06) !important;
+}
+
+body.body--dark .rv-action-edit:hover,
+body.app-dark .rv-action-edit:hover {
+    background: rgba(var(--theme-gold-light-rgb), 0.12) !important;
+    border-color: var(--theme-gold-light) !important;
+}
+
+body.body--dark .rv-action-confirm,
+body.app-dark .rv-action-confirm {
+    color: var(--theme-gold-pale) !important;
+    background: linear-gradient(
+        135deg,
+        var(--theme-wine) 0%,
+        var(--theme-wine-deep) 55%,
+        #2a0d13 100%
+    ) !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(var(--theme-gold-light-rgb), 0.22) !important;
+}
+
+body.body--dark .rv-pill.is-ok,
+body.app-dark .rv-pill.is-ok {
+    color: var(--theme-gold-pale) !important;
+    background: rgba(var(--theme-wine-rgb), 0.28) !important;
+    border: 1px solid rgba(var(--theme-gold-light-rgb), 0.28);
 }
 
 body.body--dark .metrics-card .metric-tile,
