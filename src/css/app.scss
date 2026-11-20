@@ -283,6 +283,24 @@ input:-webkit-autofill:active {
     padding-bottom: 12px !important;
 }
 
+/* La fila de progreso de QTable hereda el th con padding/gradiente y “engorda” el encabezado */
+.q-table thead tr.q-table__progress {
+    height: 0 !important;
+}
+
+.q-table thead tr.q-table__progress > th {
+    padding: 0 !important;
+    border: 0 !important;
+    line-height: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
+}
+
+.q-table thead tr.q-table__progress .q-linear-progress {
+    display: none !important;
+}
+
 .q-table tbody td {
     border-bottom: 1px solid var(--app-border) !important;
     font-size: 0.875rem;
@@ -1176,6 +1194,17 @@ body.body--dark {
         border-bottom: 1px solid rgba(var(--theme-gold-light-rgb), 0.28) !important;
     }
 
+    .q-table thead tr.q-table__progress > th,
+    .q-table--dark thead tr.q-table__progress > th,
+    .q-table__card--dark thead tr.q-table__progress > th,
+    .q-dark thead tr.q-table__progress > th,
+    .surface-card thead tr.q-table__progress > th {
+        padding: 0 !important;
+        border: 0 !important;
+        height: 0 !important;
+        background: transparent !important;
+    }
+
     .q-table tbody td,
     .q-table--dark tbody td,
     .q-dark tbody td {
@@ -1282,20 +1311,39 @@ body.body--dark {
         background: transparent !important;
     }
 
-    .q-menu {
-        background: var(--theme-dark) !important;
-        color: var(--app-ink);
-        border: 1px solid var(--app-gold-line);
+    .q-menu,
+    .q-menu.q-dark,
+    .q-menu--dark {
+        background:
+            radial-gradient(120% 90% at 0% 0%, rgba(var(--theme-wine-rgb), 0.16), transparent 55%),
+            color-mix(in srgb, var(--theme-dark) 92%, var(--theme-wine-deep)) !important;
+        color: var(--app-ink, #f1e8dc) !important;
+        border: 1px solid rgba(var(--theme-gold-light-rgb), 0.2) !important;
+        box-shadow: var(--app-shadow-md);
+    }
+
+    .q-menu .q-item,
+    .q-menu .q-item__label,
+    .q-menu .q-item__section {
+        color: var(--app-ink, #f1e8dc) !important;
+    }
+
+    .q-menu .text-negative,
+    .q-menu .q-icon.text-negative,
+    .text-negative {
+        color: #f2a4a0 !important;
     }
 
     .header-select-menu {
-        background: var(--theme-dark) !important;
+        background:
+            radial-gradient(120% 90% at 0% 0%, rgba(var(--theme-wine-rgb), 0.16), transparent 55%),
+            color-mix(in srgb, var(--theme-dark) 92%, var(--theme-wine-deep)) !important;
     }
 
     .header-select-menu .q-item,
     .header-select-menu .q-item__label,
     .header-select-menu .q-item__section {
-        color: var(--app-ink) !important;
+        color: var(--app-ink, #f1e8dc) !important;
     }
 
     .q-banner.bg-warning,
