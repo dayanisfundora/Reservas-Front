@@ -11,7 +11,7 @@
             <div class="notif-head row items-center no-wrap">
                 <div class="col">
                     <div class="notif-eyebrow">Recepción</div>
-                    <div class="notif-title">Llegadas próximas</div>
+                    <div class="notif-title">Entradas y salidas</div>
                 </div>
                 <q-btn flat round dense icon="refresh" :loading="store.loading" @click="store.refresh()">
                     <q-tooltip>Actualizar</q-tooltip>
@@ -35,7 +35,7 @@
             <div class="notif-body col">
                 <div v-if="store.loading && !store.items.length" class="notif-empty">
                     <q-spinner color="primary" size="32px" />
-                    <div>Cargando llegadas…</div>
+                    <div>Cargando movimientos…</div>
                 </div>
 
                 <div v-else-if="store.lastError" class="notif-empty">
@@ -46,9 +46,9 @@
 
                 <div v-else-if="!store.grouped.length" class="notif-empty">
                     <q-icon name="notifications_none" size="40px" color="grey-5" />
-                    <div class="text-weight-medium">Sin llegadas próximas</div>
+                    <div class="text-weight-medium">Sin entradas ni salidas próximas</div>
                     <div class="text-caption text-grey-6">
-                        Aquí verás las reservas de hoy y mañana según se acerque la hora de llegada.
+                        Aquí verás las reservas de hoy y mañana según se acerque la entrada o la salida.
                     </div>
                 </div>
 
@@ -57,14 +57,18 @@
                         <div class="notif-group-label" :class="`is-${group.key}`">{{ group.label }}</div>
                         <article
                             v-for="item in group.items"
-                            :key="item.id"
+                            :key="item.key || `${item.tipo}-${item.id}`"
                             class="notif-card"
-                            :class="`is-${item.urgency}`"
+                            :class="[`is-${item.urgency}`, `is-tipo-${item.tipo || 'entrada'}`]"
                         >
                             <div class="notif-card-top row items-start no-wrap">
                                 <div class="col">
+                                    <div class="notif-tipo" :class="item.tipo === 'salida' ? 'is-salida' : 'is-entrada'">
+                                        {{ item.tipo === 'salida' ? 'Salida' : 'Entrada' }}
+                                    </div>
                                     <div class="notif-name">{{ item.cliente_nombre }}</div>
                                     <div class="notif-meta">
+                                        <template v-if="item.casa_nombre">{{ item.casa_nombre }} · </template>
                                         {{ item.habitacion_nombre }}
                                         · {{ item.cantidad_personas }} pax
                                         · {{ estadoLabel(item.estado) }}
@@ -142,22 +146,27 @@ function estadoLabel(estado) {
 }
 
 function formatWhen(item) {
-    const fecha = String(item.fecha_entrada || '').slice(0, 10)
+    const esSalida = item.tipo === 'salida'
+    const fecha = String(item.fecha_evento || (esSalida ? item.fecha_salida : item.fecha_entrada) || '').slice(0, 10)
     const [y, m, d] = fecha.split('-').map(Number)
     const date = new Date(y, m - 1, d)
     const day = date.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
+    if (esSalida) return `${day} · salida del huésped`
     const hora = item.hora_llegada ? String(item.hora_llegada).slice(0, 5) : null
     if (hora) return `${day} · llegada ${hora}`
-    return `${day} · hora sin definir`
+    return `${day} · llegada sin hora`
 }
 
 async function goToReserva(item) {
     store.closeDrawer()
+    const fecha = String(
+        item.fecha_evento || (item.tipo === 'salida' ? item.fecha_salida : item.fecha_entrada) || '',
+    ).slice(0, 10)
     await router.push({
         name: 'CalendarioReservas',
         query: {
             reserva_id: String(item.id),
-            fecha: String(item.fecha_entrada || '').slice(0, 10),
+            fecha,
         },
     })
 }
@@ -260,6 +269,29 @@ async function goToReserva(item) {
     background: color-mix(in srgb, #f97316 7%, var(--app-surface, #fff));
 }
 
+.notif-tipo {
+    display: inline-flex;
+    align-items: center;
+    height: 18px;
+    padding: 0 7px;
+    margin-bottom: 4px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.notif-tipo.is-entrada {
+    color: #7a1f2b;
+    background: rgba(122, 31, 43, 0.12);
+}
+
+.notif-tipo.is-salida {
+    color: #3d6e8c;
+    background: rgba(61, 110, 140, 0.14);
+}
+
 .notif-name {
     font-size: 0.98rem;
     font-weight: 800;
@@ -303,45 +335,136 @@ async function goToReserva(item) {
 .notif-dismiss {
     color: var(--app-ink-2, #64748b);
 }
+</style>
 
-:global(body.body--dark) .notif-shell,
-:global(body.app-dark) .notif-shell {
-    background: #1a222c;
+<style>
+/* Dark mode: fondos vino/oscuro (sin tinte azul de Quasar dark). */
+body.body--dark aside.notif-drawer.q-drawer,
+body.app-dark aside.notif-drawer.q-drawer,
+aside.notif-drawer.q-drawer.q-dark {
+    background: var(--theme-dark-page, #1a1214) !important;
+    background-color: var(--theme-dark-page, #1a1214) !important;
+    border-color: rgba(212, 175, 106, 0.16) !important;
 }
 
-:global(body.body--dark) .notif-head,
-:global(body.app-dark) .notif-head,
-:global(body.body--dark) .notif-card,
-:global(body.app-dark) .notif-card {
-    background: #243041;
+body.body--dark .notif-drawer .notif-shell,
+body.app-dark .notif-drawer .notif-shell,
+.notif-drawer.q-dark .notif-shell {
+    background: var(--theme-dark-page, #1a1214);
+}
+
+body.body--dark .notif-drawer .notif-head,
+body.app-dark .notif-drawer .notif-head,
+.notif-drawer.q-dark .notif-head {
+    background: var(--theme-dark, #241a1c);
+    border-bottom-color: rgba(212, 175, 106, 0.14);
+}
+
+body.body--dark .notif-drawer .notif-toolbar,
+body.app-dark .notif-drawer .notif-toolbar,
+.notif-drawer.q-dark .notif-toolbar {
+    background: rgba(122, 31, 43, 0.22);
+    border-bottom-color: rgba(212, 175, 106, 0.1);
+}
+
+body.body--dark .notif-drawer .notif-card,
+body.app-dark .notif-drawer .notif-card,
+.notif-drawer.q-dark .notif-card {
+    background: var(--theme-dark, #241a1c);
     border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
 }
 
-:global(body.body--dark) .notif-title,
-:global(body.app-dark) .notif-title,
-:global(body.body--dark) .notif-name,
-:global(body.app-dark) .notif-name {
-    color: #f8fafc;
+body.body--dark .notif-drawer .notif-card.is-vencida,
+body.app-dark .notif-drawer .notif-card.is-vencida,
+.notif-drawer.q-dark .notif-card.is-vencida {
+    background: #3a2228;
+    border-color: rgba(248, 113, 113, 0.45);
 }
 
-:global(body.body--dark) .notif-meta,
-:global(body.app-dark) .notif-meta,
-:global(body.body--dark) .notif-when,
-:global(body.app-dark) .notif-when,
-:global(body.body--dark) .notif-count,
-:global(body.app-dark) .notif-count {
-    color: #cbd5e1;
+body.body--dark .notif-drawer .notif-card.is-en_breve,
+body.app-dark .notif-drawer .notif-card.is-en_breve,
+.notif-drawer.q-dark .notif-card.is-en_breve {
+    background: #3a2c22;
+    border-color: rgba(251, 146, 60, 0.45);
 }
 
-:global(body.body--dark) .notif-taxi.is-ok,
-:global(body.app-dark) .notif-taxi.is-ok {
-    color: #6ee7b7;
-    background: rgba(16, 185, 129, 0.16);
-}
-
-:global(body.body--dark) .notif-taxi.is-danger,
-:global(body.app-dark) .notif-taxi.is-danger {
+body.body--dark .notif-drawer .notif-group-label.is-vencida,
+body.app-dark .notif-drawer .notif-group-label.is-vencida,
+.notif-drawer.q-dark .notif-group-label.is-vencida {
     color: #fca5a5;
-    background: rgba(239, 68, 68, 0.18);
+}
+
+body.body--dark .notif-drawer .notif-group-label.is-en_breve,
+body.app-dark .notif-drawer .notif-group-label.is-en_breve,
+.notif-drawer.q-dark .notif-group-label.is-en_breve {
+    color: #fdba74;
+}
+
+body.body--dark .notif-drawer .notif-group-label.is-hoy,
+body.app-dark .notif-drawer .notif-group-label.is-hoy,
+.notif-drawer.q-dark .notif-group-label.is-hoy {
+    color: #f0b4bc;
+}
+
+body.body--dark .notif-drawer .notif-group-label.is-manana,
+body.app-dark .notif-drawer .notif-group-label.is-manana,
+.notif-drawer.q-dark .notif-group-label.is-manana {
+    color: #b3a597;
+}
+
+body.body--dark .notif-drawer .notif-title,
+body.app-dark .notif-drawer .notif-title,
+.notif-drawer.q-dark .notif-title,
+body.body--dark .notif-drawer .notif-name,
+body.app-dark .notif-drawer .notif-name,
+.notif-drawer.q-dark .notif-name {
+    color: #f1e8dc;
+}
+
+body.body--dark .notif-drawer .notif-meta,
+body.app-dark .notif-drawer .notif-meta,
+.notif-drawer.q-dark .notif-meta,
+body.body--dark .notif-drawer .notif-when,
+body.app-dark .notif-drawer .notif-when,
+.notif-drawer.q-dark .notif-when,
+body.body--dark .notif-drawer .notif-count,
+body.app-dark .notif-drawer .notif-count,
+.notif-drawer.q-dark .notif-count {
+    color: #b3a597;
+}
+
+body.body--dark .notif-drawer .notif-tipo.is-entrada,
+body.app-dark .notif-drawer .notif-tipo.is-entrada,
+.notif-drawer.q-dark .notif-tipo.is-entrada {
+    color: #fecdd3;
+    background: rgba(122, 31, 43, 0.45);
+}
+
+body.body--dark .notif-drawer .notif-tipo.is-salida,
+body.app-dark .notif-drawer .notif-tipo.is-salida,
+.notif-drawer.q-dark .notif-tipo.is-salida {
+    color: #efe0bf;
+    background: rgba(184, 137, 59, 0.28);
+}
+
+body.body--dark .notif-drawer .notif-taxi.is-ok,
+body.app-dark .notif-drawer .notif-taxi.is-ok,
+.notif-drawer.q-dark .notif-taxi.is-ok {
+    color: #6ee7b7;
+    background: rgba(16, 185, 129, 0.18);
+}
+
+body.body--dark .notif-drawer .notif-taxi.is-danger,
+body.app-dark .notif-drawer .notif-taxi.is-danger,
+.notif-drawer.q-dark .notif-taxi.is-danger {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.2);
+}
+
+body.body--dark .notif-drawer .notif-dismiss,
+body.app-dark .notif-drawer .notif-dismiss,
+.notif-drawer.q-dark .notif-dismiss {
+    color: #8a7a70;
 }
 </style>

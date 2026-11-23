@@ -3,10 +3,12 @@ import { api } from 'src/boot/axios'
 import { useAuthStore } from './auth-store'
 import { useProyectoStore } from './proyecto-store'
 
-const STORAGE_PREFIX = 'reservas-notif-dismissed'
+const STORAGE_PREFIX = 'reservas-notif-dismissed-v3'
 const POLL_MS = 60_000
 const BRIEF_HOURS = 2
 const LATE_WITHOUT_TIME_HOUR = 14
+/** Hora de referencia para salidas sin hora explícita (checkout habitual). */
+const DEFAULT_SALIDA_HORA = '12:00'
 
 function todayIso(date = new Date()) {
     const y = date.getFullYear()
@@ -28,6 +30,35 @@ function normalizeHora(hora) {
     return /^\d{2}:\d{2}$/.test(text) ? text : null
 }
 
+function itemTipo(item) {
+    return item?.tipo === 'salida' ? 'salida' : 'entrada'
+}
+
+function itemFecha(item) {
+    if (itemTipo(item) === 'salida') {
+        return String(item.fecha_evento || item.fecha_salida || '').slice(0, 10)
+    }
+    return String(item.fecha_evento || item.fecha_entrada || '').slice(0, 10)
+}
+
+function itemHora(item) {
+    if (itemTipo(item) === 'salida') {
+        return normalizeHora(item.hora_evento) || DEFAULT_SALIDA_HORA
+    }
+    return normalizeHora(item.hora_llegada || item.hora_evento)
+}
+
+function itemStamp(item) {
+    const hora = itemTipo(item) === 'salida'
+        ? (normalizeHora(item.hora_evento) || '')
+        : (normalizeHora(item.hora_llegada || item.hora_evento) || '')
+    return `${itemTipo(item)}|${itemFecha(item)}|${hora}`
+}
+
+function itemKey(item) {
+    return `${itemTipo(item)}-${item.id}`
+}
+
 function arrivalDateTime(fechaIso, hora) {
     const [y, m, d] = String(fechaIso).split('-').map(Number)
     const hhmm = normalizeHora(hora)
@@ -35,13 +66,14 @@ function arrivalDateTime(fechaIso, hora) {
     return new Date(y, m - 1, d, hh, mm, 0, 0)
 }
 
-function dismissKey(userId, casaId) {
-    return `${STORAGE_PREFIX}:${userId || 'anon'}:${casaId || 'none'}`
+function dismissKey(userId) {
+    // Un solo bucket por usuario: al cambiar Todas/casa no se pierden ni “reaparecen” avisos.
+    return `${STORAGE_PREFIX}:${userId || 'anon'}`
 }
 
-function readDismissed(userId, casaId) {
+function readDismissed(userId) {
     try {
-        const raw = window.localStorage.getItem(dismissKey(userId, casaId))
+        const raw = window.localStorage.getItem(dismissKey(userId))
         if (!raw) return {}
         const parsed = JSON.parse(raw)
         return parsed && typeof parsed === 'object' ? parsed : {}
@@ -50,21 +82,24 @@ function readDismissed(userId, casaId) {
     }
 }
 
-function writeDismissed(userId, casaId, map) {
-    window.localStorage.setItem(dismissKey(userId, casaId), JSON.stringify(map))
+function writeDismissed(userId, map) {
+    window.localStorage.setItem(dismissKey(userId), JSON.stringify(map))
 }
 
 function urgencyFor(item, now = new Date()) {
     const hoy = todayIso(now)
     const manana = addDaysIso(hoy, 1)
-    const fecha = String(item.fecha_entrada || '').slice(0, 10)
-    const hora = normalizeHora(item.hora_llegada)
-    const arrival = arrivalDateTime(fecha, hora || '00:00')
+    const fecha = itemFecha(item)
+    const horaExplicit = itemTipo(item) === 'salida'
+        ? normalizeHora(item.hora_evento)
+        : normalizeHora(item.hora_llegada || item.hora_evento)
+    const hora = itemHora(item)
+    const when = arrivalDateTime(fecha, hora || '00:00')
 
     if (fecha === hoy) {
-        if (hora) {
-            if (arrival.getTime() < now.getTime()) return 'vencida'
-            const msLeft = arrival.getTime() - now.getTime()
+        if (horaExplicit || itemTipo(item) === 'salida') {
+            if (when.getTime() < now.getTime()) return 'vencida'
+            const msLeft = when.getTime() - now.getTime()
             if (msLeft <= BRIEF_HOURS * 60 * 60 * 1000) return 'en_breve'
             return 'hoy'
         }
@@ -77,6 +112,7 @@ function urgencyFor(item, now = new Date()) {
 }
 
 const URGENCY_ORDER = { vencida: 0, en_breve: 1, hoy: 2, manana: 3 }
+const TIPO_ORDER = { entrada: 0, salida: 1 }
 
 export const useNotificacionesStore = defineStore('notificaciones', {
     state: () => ({
@@ -90,23 +126,34 @@ export const useNotificacionesStore = defineStore('notificaciones', {
 
     getters: {
         activeItems(state) {
+            const proyecto = useProyectoStore()
+            const casaFiltro = proyecto.casaActivaId
+
             return state.items
                 .map((item) => ({
                     ...item,
+                    tipo: itemTipo(item),
+                    key: itemKey(item),
                     urgency: urgencyFor(item),
                 }))
                 .filter((item) => {
-                    const stamp = state.dismissed[String(item.id)]
+                    if (casaFiltro != null && Number(item.casa_id) !== Number(casaFiltro)) {
+                        return false
+                    }
+                    const stamp = state.dismissed[item.key]
                     if (!stamp) return true
-                    return stamp !== `${item.fecha_entrada}|${normalizeHora(item.hora_llegada) || ''}`
+                    return stamp !== itemStamp(item)
                 })
                 .sort((a, b) => {
                     const ua = URGENCY_ORDER[a.urgency] ?? 9
                     const ub = URGENCY_ORDER[b.urgency] ?? 9
                     if (ua !== ub) return ua - ub
-                    const ha = normalizeHora(a.hora_llegada) || '99:99'
-                    const hb = normalizeHora(b.hora_llegada) || '99:99'
+                    const ha = itemHora(a) || '99:99'
+                    const hb = itemHora(b) || '99:99'
                     if (ha !== hb) return ha.localeCompare(hb)
+                    const ta = TIPO_ORDER[a.tipo] ?? 9
+                    const tb = TIPO_ORDER[b.tipo] ?? 9
+                    if (ta !== tb) return ta - tb
                     return Number(a.id) - Number(b.id)
                 })
         },
@@ -115,7 +162,7 @@ export const useNotificacionesStore = defineStore('notificaciones', {
             return this.activeItems.length
         },
 
-        grouped(state) {
+        grouped() {
             const groups = {
                 vencida: { key: 'vencida', label: 'En retraso', items: [] },
                 en_breve: { key: 'en_breve', label: 'En breve (2 h)', items: [] },
@@ -146,40 +193,32 @@ export const useNotificacionesStore = defineStore('notificaciones', {
 
         hydrateDismissed() {
             const auth = useAuthStore()
-            const proyecto = useProyectoStore()
-            this.dismissed = readDismissed(auth.user?.id, proyecto.casaActivaId)
+            this.dismissed = readDismissed(auth.user?.id)
         },
 
         dismiss(item) {
             const auth = useAuthStore()
-            const proyecto = useProyectoStore()
             const next = {
                 ...this.dismissed,
-                [String(item.id)]: `${item.fecha_entrada}|${normalizeHora(item.hora_llegada) || ''}`,
+                [itemKey(item)]: itemStamp(item),
             }
             this.dismissed = next
-            writeDismissed(auth.user?.id, proyecto.casaActivaId, next)
+            writeDismissed(auth.user?.id, next)
         },
 
         dismissAll() {
             const auth = useAuthStore()
-            const proyecto = useProyectoStore()
             const next = { ...this.dismissed }
             for (const item of this.activeItems) {
-                next[String(item.id)] = `${item.fecha_entrada}|${normalizeHora(item.hora_llegada) || ''}`
+                next[itemKey(item)] = itemStamp(item)
             }
             this.dismissed = next
-            writeDismissed(auth.user?.id, proyecto.casaActivaId, next)
+            writeDismissed(auth.user?.id, next)
         },
 
         async refresh() {
             const auth = useAuthStore()
-            const proyecto = useProyectoStore()
             if (!auth.isAuthenticated || !auth.hasPermission('ver_reservas')) {
-                this.items = []
-                return
-            }
-            if (!proyecto.casaActivaId) {
                 this.items = []
                 return
             }
@@ -188,8 +227,11 @@ export const useNotificacionesStore = defineStore('notificaciones', {
             this.loading = true
             this.lastError = null
             try {
+                // Siempre pedimos todas las casas; el filtro Todas/casa se aplica en activeItems.
                 const { data } = await api.get('/reservas/proximas-llegadas', {
                     showGenericError: false,
+                    skipScopeParams: true,
+                    params: {},
                 })
                 this.items = Array.isArray(data?.data) ? data.data : []
             } catch (error) {
