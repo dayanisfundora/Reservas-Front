@@ -72,7 +72,7 @@
                         >
                             {{ notificacionesStore.badgeCount > 99 ? '99+' : notificacionesStore.badgeCount }}
                         </q-badge>
-                        <q-tooltip>Llegadas próximas</q-tooltip>
+                        <q-tooltip>Entradas y salidas</q-tooltip>
                     </q-btn>
 
                     <q-btn
