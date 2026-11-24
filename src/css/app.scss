@@ -165,16 +165,20 @@ body.body--dark .q-card.loading-card {
     border-color: var(--app-primary);
 }
 
-// Chrome paints saved credentials yellow; keep the field's own background in both themes.
+// Chrome autofill: evitar fondo amarillo sin clip de texto (rompe contraseñas guardadas).
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
     -webkit-text-fill-color: var(--app-ink) !important;
-    caret-color: var(--app-ink);
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    transition: background-color 600000s 0s, color 600000s 0s;
+    caret-color: var(--app-ink) !important;
+    background-color: transparent !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--app-surface, #fff) inset !important;
+    box-shadow: 0 0 0 1000px var(--app-surface, #fff) inset !important;
+    -webkit-background-clip: padding-box !important;
+    background-clip: padding-box !important;
+    transition: background-color 99999s ease-out 0s !important;
+    filter: none !important;
 }
 
 .q-field__label {
