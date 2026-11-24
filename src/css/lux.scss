@@ -111,10 +111,27 @@
     color: rgba(247, 239, 227, 0.55);
 }
 
-.lux-field input:-webkit-autofill {
-    -webkit-text-fill-color: #fff;
-    -webkit-box-shadow: 0 0 0 1000px transparent inset;
-    transition: background-color 9999s ease-out;
+// Login (fondo oscuro): autofill en blanco y etiqueta flotante para que no se monte.
+.lux-field input:-webkit-autofill,
+.lux-field input:-webkit-autofill:hover,
+.lux-field input:-webkit-autofill:focus,
+.lux-field input:-webkit-autofill:active {
+    -webkit-text-fill-color: #fff !important;
+    color: #fff !important;
+    caret-color: #fff !important;
+    background-color: transparent !important;
+    -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+    box-shadow: 0 0 0 1000px transparent inset !important;
+    -webkit-background-clip: padding-box !important;
+    background-clip: padding-box !important;
+    transition: background-color 99999s ease-out 0s !important;
+    filter: none !important;
+}
+
+.lux-field .q-field__control-container:has(input:-webkit-autofill) .q-field__label,
+.lux-field .q-field__control-container:has(input:autofill) .q-field__label {
+    transform: translateY(-40%) scale(0.75);
+    color: var(--lx-gold) !important;
 }
 
 // Botón dorado tipo lámina
