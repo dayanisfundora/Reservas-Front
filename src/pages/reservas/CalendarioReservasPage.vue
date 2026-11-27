@@ -191,6 +191,16 @@
                             <q-tooltip>Imprimir</q-tooltip>
                         </q-btn>
                         <q-btn
+                            outline
+                            dense
+                            round
+                            icon="info_outline"
+                            class="plan-outline-btn"
+                            @click="legendOpen = true"
+                        >
+                            <q-tooltip>Leyenda</q-tooltip>
+                        </q-btn>
+                        <q-btn
                             v-if="canManage"
                             unelevated
                             no-caps
@@ -207,8 +217,9 @@
                     class="calendar-export-root"
                     :class="{ 'is-exporting': downloadingPdf || printingPdf }"
                 >
-                <div class="legend-row">
-                    <span v-for="item in legend" :key="item.key" class="legend-item">
+                <!-- Solo visible al exportar PDF; en pantalla se consulta por el botón Leyenda -->
+                <div class="legend-row legend-row--export-only" aria-hidden="true">
+                    <span v-for="item in legend" :key="`export-${item.key}`" class="legend-item">
                         <span class="legend-dot" :style="{ background: item.color }" />
                         {{ item.label }}
                     </span>
@@ -547,6 +558,54 @@
         </div>
 
         <!-- Day / reserva detail -->
+        <q-dialog v-model="legendOpen">
+            <q-card class="legend-dialog">
+                <q-card-section class="row items-center no-wrap q-pb-none">
+                    <div class="col">
+                        <div class="text-caption text-weight-bold text-primary">Calendario</div>
+                        <div class="text-h6 text-weight-bold">Leyenda</div>
+                    </div>
+                    <q-btn flat round dense icon="close" v-close-popup />
+                </q-card-section>
+                <q-card-section class="legend-dialog-body">
+                    <div v-if="legend.length" class="legend-dialog-block">
+                        <div class="legend-dialog-title">Habitaciones</div>
+                        <div class="legend-dialog-chips">
+                            <span v-for="item in legend" :key="`dlg-${item.key}`" class="legend-item">
+                                <span class="legend-dot" :style="{ background: item.color }" />
+                                {{ item.label }}
+                            </span>
+                        </div>
+                    </div>
+                    <div v-if="viewMode === 'mensual'" class="legend-dialog-block">
+                        <div class="legend-dialog-title">Estados en vista mensual</div>
+                        <div class="legend-dialog-chips">
+                            <span class="legend-key"><span class="legend-swatch is-arrival" />Llegada</span>
+                            <span class="legend-key"><span class="legend-swatch" />Estancia</span>
+                            <span class="legend-key"><span class="legend-swatch is-pendiente" />Pendiente</span>
+                        </div>
+                    </div>
+                    <div class="legend-dialog-block">
+                        <div class="legend-dialog-title">Taxi</div>
+                        <div class="legend-dialog-chips">
+                            <span class="legend-key">
+                                <q-icon name="local_taxi" size="14px" />
+                                Taxi <b>L</b> llegada · <b>S</b> salida
+                            </span>
+                            <span class="legend-key">
+                                <span class="cal-taxi is-ok">L<q-icon name="check" size="10px" /></span>
+                                Solicitado
+                            </span>
+                            <span class="legend-key">
+                                <span class="cal-taxi is-warn">L<q-icon name="close" size="10px" /></span>
+                                Sin taxi
+                            </span>
+                        </div>
+                    </div>
+                </q-card-section>
+            </q-card>
+        </q-dialog>
+
         <q-dialog v-model="detailOpen" persistent @hide="resetDetailState">
             <q-card class="detail-card rv-card no-accent-bar">
                 <!-- Confirmar cancelación -->
@@ -1170,6 +1229,7 @@ const bookGridWrapRef = ref(null)
 const search = ref('')
 const selectedHabitacionIds = ref([])
 const detailOpen = ref(false)
+const legendOpen = ref(false)
 const metricsOpen = ref(false)
 const activeReserva = ref(null)
 const dayDetailList = ref([])
@@ -2643,6 +2703,46 @@ onMounted(async () => {
     flex-wrap: wrap;
     gap: 14px;
     margin: 12px 0 10px;
+}
+
+.legend-row--export-only {
+    display: none;
+}
+
+.calendar-export-root.is-exporting .legend-row--export-only {
+    display: flex;
+}
+
+.legend-dialog {
+    width: min(520px, 94vw);
+    max-width: 94vw;
+}
+
+.legend-dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 8px;
+}
+
+.legend-dialog-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.legend-dialog-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--plan-muted, #64748b);
+}
+
+.legend-dialog-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .legend-item {
